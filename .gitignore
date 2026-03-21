@@ -1,0 +1,94 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+.vscode
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+.pub-cache/
+.pub/
+/build/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# ========================================
+# Android
+# ========================================
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# ========================================
+# iOS
+# ========================================
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework/
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/App.framework
+ios/Flutter/ephemeral/
+ios/Runner.xcodeproj/project.xcworkspace/
+ios/Runner.xcworkspace/
+ios/DerivedData/
+
+# ========================================
+# macOS
+# ========================================
+macos/Flutter/ephemeral/
+macos/Pods/
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Runner.xcodeproj/project.xcworkspace/
+macos/Runner.xcworkspace/
+macos/DerivedData/
+
+# ========================================
+# Windows
+# ========================================
+windows/flutter/ephemeral/
+windows/GeneratedPluginRegistrant.h
+windows/GeneratedPluginRegistrant.cpp
+windows/x64/
+windows/x86/
+
+# ========================================
+# Linux
+# ========================================
+linux/flutter/ephemeral/
+linux/GeneratedPluginRegistrant.cc
+linux/GeneratedPluginRegistrant.h
+linux/x64/
+linux/x86/
+
+# FVM Version Cache
+.fvm/

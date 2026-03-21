@@ -1,0 +1,158 @@
+name: closerrr
+description: "Close to Celeb"
+publish_to: "none"
+
+version: 1.0.1+3
+
+environment:
+  sdk: ">=3.6.2 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # UI/UX and Animation
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.2.1
+  connectivity_plus: ^6.1.3
+  flutter_svg: ^2.0.16
+  flutter_animate: ^4.5.2
+
+  # State Management and Routing
+  get: ^4.6.6
+  go_router: ^14.2.7
+
+  # Networking and API Calls
+  dio: ^5.7.0
+
+  # Authentication
+  sign_in_with_apple: ^6.1.3
+  google_sign_in: ^6.2.1
+
+  # Data Storage and Preferences
+  shared_preferences: ^2.5.3
+
+  # Notifications and Messaging
+  firebase_core: ^3.13.1
+  firebase_messaging: ^15.1.6
+  flutter_local_notifications: ^19.3.0
+
+  # Media Handling
+  image_picker: ^1.0.8
+  video_player: ^2.9.2
+  just_audio: ^0.9.42
+
+  # Utilities
+  # intl: ^0.19.0
+  intl: ^0.20.2
+  logger: ^2.1.0
+  dartz: ^0.10.1
+  scroll_to_index: ^3.0.1
+  cached_network_image: ^3.4.1
+
+  # Chat and Interaction
+  # flutter_chat_ui: ^1.6.15
+  flutter_chat_ui: ^2.9.0
+  flutter_chat_core: ^2.8.0
+
+  # Loading and Feedback
+  fluttertoast: ^8.2.8
+  loading_animation_widget: ^1.2.1
+
+  # Layout and Sizing
+  sizer: ^2.0.15
+
+  pin_code_fields: ^8.0.1
+  flutter_launcher_icons: ^0.14.2
+  http: ^1.2.2
+  file_picker: ^8.1.7
+  story_view: ^0.16.5
+  socket_io_client: ^3.0.2
+  video_thumbnail: ^0.5.6
+  table_calendar: ^3.1.3
+  url_launcher: ^6.3.1
+  in_app_purchase: ^3.2.1
+  # only to test inAppPurchase in testing environment
+  in_app_purchase_storekit: ^0.4.3
+  syncfusion_flutter_pdfviewer: ^29.1.39
+  dropdown_button2: ^2.3.9
+  stream_video: ^0.10.1
+  stream_video_flutter: ^0.10.1
+  # flutter_callkit_incoming: ^2.5.2
+
+  # Audio Recording
+  record: ^6.0.0
+  path_provider: ^2.1.5
+  uuid: ^4.5.1
+  permission_handler: ^12.0.0+1
+  flutter_image_compress: ^2.4.0
+  ffmpeg_kit_flutter_new: ^3.2.0
+  video_compress: ^3.1.4
+  audio_waveforms: ^1.3.0
+  flutter_keyword_highlighter: ^1.1.1
+  app_settings: ^6.1.1
+  # ffmpeg_kit_flutter_new: ^1.6.1
+
+  # DeepLink
+  app_links: ^6.4.0
+  crypto: ^3.0.6
+  mime: ^2.0.0
+  flutter_chat_types: ^3.6.2
+  flutter_sound: ^9.28.0
+  flutter_cache_manager: ^3.4.1
+  share_plus: ^12.0.1
+
+  month_year_picker: ^0.5.0+1
+
+dependency_overrides:
+  rxdart: ^0.28.0
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/icon/icon.png"
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/images/icon_images/
+    - assets/images/temp_img/
+    - assets/svg/
+    - assets/png/
+    - assets/gif/
+    - assets/pdf/
+
+  fonts:
+    - family: AnnieUseYourTelescope
+      fonts:
+        - asset: assets/fonts/annie/AnnieUseYourTelescope-Regular.ttf
+    - family: Hellix
+      fonts:
+        - asset: assets/fonts/hellix/Hellix-Regular.ttf
+        - asset: assets/fonts/hellix/Hellix-Bold.ttf
+        - asset: assets/fonts/hellix/Hellix-SemiBold.ttf
+    - family: FredokaOne
+      fonts:
+        - asset: assets/fonts/fredoka/FredokaOne-Regular.ttf
+    - family: Circe
+      fonts:
+        - asset: assets/fonts/crice/Circe-Bold.otf
+          weight: 700
+        - asset: assets/fonts/crice/Circe-ExtraBold.otf
+          weight: 800
+        - asset: assets/fonts/crice/CRC25.otf
+          weight: 400
+        - asset: assets/fonts/crice/CRC35.otf
+          weight: 500
+        - asset: assets/fonts/crice/CRC55.otf
+          weight: 600
