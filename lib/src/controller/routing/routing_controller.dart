@@ -1,6 +1,9 @@
 import 'package:app_links/app_links.dart';
 import 'package:closerrr/core/services/shared_preference_service.dart';
 import 'package:closerrr/src/services/app_lock_service.dart';
+import 'package:closerrr/src/view/widgets/specific_widgets/lock_screen_widget.dart';
+import 'package:closerrr/src/controller/settings_controller/preferences_controller.dart';
+import 'package:flutter/material.dart';
 import 'package:closerrr/core/services/socket_services.dart';
 import 'package:closerrr/core/utils/constant_string.dart';
 import 'package:closerrr/src/controller/custom_controllers/app_links_controller.dart';
@@ -281,20 +284,37 @@ class RouterController extends GetxController {
           pageBuilder: (context, state) => CupertinoPage(
             child: SplashScreen(
               onInit: () async {
-                // Start both the home route check and timer simultaneously
-                final homeRouteFuture = getHomeRoute();
-                final minDurationFuture =
-                    Future.delayed(const Duration(milliseconds: 3500));
+                final routeWithExtra = await getHomeRoute();
+                await Future.delayed(const Duration(milliseconds: 4200));
 
-                // Wait for both to complete
-                final results =
-                    await Future.wait([homeRouteFuture, minDurationFuture]);
-                final routeWithExtra = results[0] as RouteWithExtra;
-                Future.microtask(() {
-                  context.go(routeWithExtra.route,
-                      extra: routeWithExtra.extra);
-                  Get.find<AppLockService>().triggerLockAfterSplash();
-                });
+                final preferencesController = Get.find<PreferencesController>();
+                final appLockService = Get.find<AppLockService>();
+                final targetRoute = routeWithExtra?.route ?? '/signin-screen';
+                final targetExtra = routeWithExtra?.extra;
+
+                if (preferencesController.isAppLockEnabled.value &&
+                    targetRoute != '/signin-screen') {
+                  appLockService.isLocked = true;
+                  appLockService.isLockScreenShowing = true;
+                  await Get.dialog(
+                    PopScope(
+                      canPop: false,
+                      child: LockScreenWidget(
+                        onAuthenticated: () {
+                          appLockService.isLocked = false;
+                          appLockService.isLockScreenShowing = false;
+                          Get.back();
+                          context.go(targetRoute, extra: targetExtra);
+                        },
+                      ),
+                    ),
+                    barrierDismissible: false,
+                    barrierColor: Colors.transparent,
+                    useSafeArea: false,
+                  );
+                } else {
+                  context.go(targetRoute, extra: targetExtra);
+                }
               },
             ),
           ),

@@ -33,14 +33,6 @@ class AppLockService extends GetxService with WidgetsBindingObserver {
     }
   }
 
-  Future<void> triggerLockAfterSplash() async {
-    await Future.delayed(const Duration(milliseconds: 1200));
-    if (preferencesController.isAppLockEnabled.value) {
-      isLocked = true;
-      showLockOverlay();
-    }
-  }
-
   Future<void> showLockOverlay() async {
     if (isLockScreenShowing) return;
     isLockScreenShowing = true;
