@@ -12,7 +12,6 @@ class AppLockService extends GetxService with WidgetsBindingObserver {
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
-    triggerLockOnStartup();
   }
 
   @override
@@ -34,8 +33,7 @@ class AppLockService extends GetxService with WidgetsBindingObserver {
     }
   }
 
-  Future<void> triggerLockOnStartup() async {
-    await Future.delayed(const Duration(milliseconds: 3600));
+  void triggerLockAfterSplash() {
     if (preferencesController.isAppLockEnabled.value) {
       isLocked = true;
       showLockOverlay();

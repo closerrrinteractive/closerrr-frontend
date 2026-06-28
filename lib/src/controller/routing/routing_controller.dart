@@ -1,5 +1,6 @@
 import 'package:app_links/app_links.dart';
 import 'package:closerrr/core/services/shared_preference_service.dart';
+import 'package:closerrr/src/services/app_lock_service.dart';
 import 'package:closerrr/core/services/socket_services.dart';
 import 'package:closerrr/core/utils/constant_string.dart';
 import 'package:closerrr/src/controller/custom_controllers/app_links_controller.dart';
@@ -289,8 +290,11 @@ class RouterController extends GetxController {
                 final results =
                     await Future.wait([homeRouteFuture, minDurationFuture]);
                 final routeWithExtra = results[0] as RouteWithExtra;
-                Future.microtask(() => context.go(routeWithExtra.route,
-                    extra: routeWithExtra.extra));
+                Future.microtask(() {
+                  context.go(routeWithExtra.route,
+                      extra: routeWithExtra.extra);
+                  Get.find<AppLockService>().triggerLockAfterSplash();
+                });
               },
             ),
           ),
