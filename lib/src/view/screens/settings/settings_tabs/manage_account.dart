@@ -276,7 +276,7 @@ class _ManageAccountState extends State<ManageAccount> {
                         SizedBox(height: 4.h),
                         _buildTextFieldSection(
                           widthScale,
-                          'Fullname',
+                          'Full Name',
                           fullnameController,
                           'assets/svg/field_person.svg',
                           true,
@@ -447,7 +447,7 @@ class _ManageAccountState extends State<ManageAccount> {
           fieldReadOnly: readOnly,
           // textLength: label == 'Username' ? null : null,
           suffixSvg:
-              label == 'Username' || label == 'Fullname' ? null : dropArrowDown,
+              label == 'Username' || label == 'Full Name' ? null : dropArrowDown,
           suffixSvgHeight: 12,
           textFieldPadding:
               EdgeInsets.symmetric(vertical: 1.6.h, horizontal: 2.w),
@@ -547,7 +547,7 @@ class _ManageAccountState extends State<ManageAccount> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildRichText(widthScale, 'Your ', 'Birthday (DD/MM/YYYY)'),
+          _buildRichText(widthScale, 'Your ', 'Birthday', text3: ' (DD/MM/YYYY)'),
           GestureDetector(
             onTap: () {
               showDatePicker(
@@ -759,7 +759,7 @@ class _ManageAccountState extends State<ManageAccount> {
     );
   }
 
-  Widget _buildRichText(double widthScale, String text1, String text2) {
+  Widget _buildRichText(double widthScale, String text1, String text2, {String? text3}) {
     return Padding(
       padding: EdgeInsets.only(bottom: 2.h),
       child: RichText(
@@ -769,7 +769,7 @@ class _ManageAccountState extends State<ManageAccount> {
               text: text1,
               style: CustomTextStyle.styledTextWidget.bodyMedium?.copyWith(
                 color: blackColor,
-                fontSize: (widthScale * kTextFormFactor) * 15,
+                fontSize: (widthScale * kTextFormFactor) * 16.5,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -777,15 +777,24 @@ class _ManageAccountState extends State<ManageAccount> {
               text: text2,
               style: CustomTextStyle.styledTextWidget.bodyMedium?.copyWith(
                 color: blueBack,
-                fontSize: (widthScale * kTextFormFactor) * 15,
+                fontSize: (widthScale * kTextFormFactor) * 16.5,
                 fontWeight: FontWeight.w700,
               ),
             ),
+            if (text3 != null)
+              TextSpan(
+                text: text3,
+                style: CustomTextStyle.styledTextWidget.bodyMedium?.copyWith(
+                  color: blackColor,
+                  fontSize: (widthScale * kTextFormFactor) * 16.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             TextSpan(
               text: ':',
               style: CustomTextStyle.styledTextWidget.bodyMedium?.copyWith(
                 color: blackColor,
-                fontSize: (widthScale * kTextFormFactor) * 15,
+                fontSize: (widthScale * kTextFormFactor) * 16.5,
                 fontWeight: FontWeight.w700,
               ),
             ),
