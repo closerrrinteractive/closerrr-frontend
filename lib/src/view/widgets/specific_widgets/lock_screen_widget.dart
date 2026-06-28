@@ -19,8 +19,6 @@ class _LockScreenWidgetState extends State<LockScreenWidget>
       Get.find<PreferencesController>();
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  bool _showToYou = false;
-
   @override
   void initState() {
     super.initState();
@@ -38,14 +36,6 @@ class _LockScreenWidgetState extends State<LockScreenWidget>
     );
 
     _animationController.repeat(reverse: true);
-
-    Future.delayed(const Duration(milliseconds: 450), () {
-      if (mounted) {
-        setState(() {
-          _showToYou = true;
-        });
-      }
-    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _authenticate();
@@ -97,63 +87,13 @@ class _LockScreenWidgetState extends State<LockScreenWidget>
                       color: primaryColor,
                     ),
                   ),
-                   AnimatedContainer(
-                    duration: const Duration(milliseconds: 1000),
-                    curve: Curves.easeInOutCubic,
-                    width: _showToYou ? 80.0 : 0.0,
-                    height: 45.0,
-                    clipBehavior: Clip.antiAlias,
-                    decoration: const BoxDecoration(),
-                    alignment: Alignment.centerLeft,
-                    child: AnimatedOpacity(
-                      opacity: _showToYou ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 800),
-                      curve: Curves.easeIn,
-                      child: Transform.translate(
-                        offset: const Offset(0, 1.5),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          physics: const NeverScrollableScrollPhysics(),
-                          child: SizedBox(
-                            width: 80.0,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'to',
-                                  style: TextStyle(
-                                    fontFamily: 'AnnieUseYourTelescope',
-                                    fontSize: 28,
-                                    color: peachColor,
-                                    shadows: [
-                                      Shadow(color: peachColor, offset: const Offset(-0.6, -0.6)),
-                                      Shadow(color: peachColor, offset: const Offset(0.6, -0.6)),
-                                      Shadow(color: peachColor, offset: const Offset(0.6, 0.6)),
-                                      Shadow(color: peachColor, offset: const Offset(-0.6, 0.6)),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 3.0),
-                                Text(
-                                  'you!',
-                                  style: TextStyle(
-                                    fontFamily: 'AnnieUseYourTelescope',
-                                    fontSize: 28,
-                                    color: peachColor,
-                                    shadows: [
-                                      Shadow(color: peachColor, offset: const Offset(-0.6, -0.6)),
-                                      Shadow(color: peachColor, offset: const Offset(0.6, -0.6)),
-                                      Shadow(color: peachColor, offset: const Offset(0.6, 0.6)),
-                                      Shadow(color: peachColor, offset: const Offset(-0.6, 0.6)),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                  Text(
+                    'is Locked',
+                    style: TextStyle(
+                      fontFamily: 'Hellix',
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: primaryColor,
                     ),
                   ),
                 ],
