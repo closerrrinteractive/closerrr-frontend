@@ -14,6 +14,7 @@ import 'package:sizer/sizer.dart';
 import '../../../../core/utils/constant.dart';
 import '../../../../core/utils/img_string.dart';
 import '../../../../main.dart';
+import 'package:closerrr/core/config/haptic_helper.dart';
 import '../../../controller/routing/routing_controller.dart';
 import '../../../models/explore/get_influencer_response.dart';
 import '../../widgets/specific_widgets/event/event_info_model.dart';
@@ -41,6 +42,8 @@ class FriendsEventsScreen extends StatefulWidget {
 }
 
 class _FriendsEventsScreenState extends State<FriendsEventsScreen> {
+  static const bool forceEmptyFriendEvents = false;
+
   final EventScreenController eventController = Get.find();
   final uiController = Get.find<UserInformationController>();
 
@@ -73,45 +76,84 @@ class _FriendsEventsScreenState extends State<FriendsEventsScreen> {
 
     return Scaffold(
       backgroundColor: whiteColor,
-      appBar: AppBar(
-        leading: Container(),
-        leadingWidth: 0,
-        toolbarHeight: 8.h,
-        surfaceTintColor: transparentColor,
-        elevation: 12,
-        backgroundColor: whiteColor,
-        shadowColor: blueBack.withOpacity(0.1),
-        title: Row(
-          children: [
-            InkWell(
-              onTap: () => RouterController.current.pop(),
-              overlayColor: const WidgetStatePropertyAll(transparentColor),
-              child: Image(
-                image: const AssetImage(backIcon),
-                height: 5.5.h,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: BoxDecoration(
+            color: whiteColor,
+            boxShadow: [
+              BoxShadow(
+                color: blueBack.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      HapticHelper.trigger(type: HapticFeedbackType.light);
+                      RouterController.current.pop();
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: whiteColor,
+                            boxShadow: [
+                              BoxShadow(
+                                color: blackColor.withOpacity(0.08),
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: SvgPicture.asset(
+                            backSvgIcon,
+                            width: 40,
+                            height: 40,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Obx(() => Text(
+                          uiController.isInfluencer.value
+                              ? 'Your Events'
+                              : 'Friend\'s Events',
+                          style: TextStyle(
+                            fontFamily: 'Hellix',
+                            color: primaryColor,
+                            fontWeight: FontWeight.w700,
+                            fontSize: (widthScale * kTextFormFactor) * 18,
+                          ),
+                        )),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(width: 1.5.w),
-            Text(
-              uiController.isInfluencer.value
-                  ? 'Your Events'
-                  : 'Friend\'s Events',
-              style: CustomTextStyle.styledTextWidget.bodyLarge?.copyWith(
-                color: primaryColor,
-                fontSize: (widthScale * kTextFormFactor) * 20,
-                fontWeight: FontWeight.w800,
-                fontFamily: 'Circe',
-              ),
-            ),
-          ],
+          ),
         ),
       ),
-      body: Obx(
-        () => SafeArea(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              children: [
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Expanded(
+              child: Obx(
+                () => SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    children: [
                 Container(
                   margin: EdgeInsets.only(top: 3.h, bottom: 3.h),
                   child: Column(
@@ -156,7 +198,7 @@ class _FriendsEventsScreenState extends State<FriendsEventsScreen> {
                 if (eventController.isLoading.value) ...{
                   SizedBox(height: 2.h),
                   const Center(child: CircularProgressIndicator()),
-                } else if (eventController.friendEvents.isEmpty) ...{
+                } else if (forceEmptyFriendEvents || eventController.friendEvents.isEmpty) ...{
                   SizedBox(height: 2.h),
                   SvgPicture.asset(
                     'assets/svg/calendar_empty.svg',
@@ -170,22 +212,26 @@ class _FriendsEventsScreenState extends State<FriendsEventsScreen> {
                       fontSize: (widthScale * kTextFormFactor) * 16,
                       color: headingColor,
                       fontFamily: 'AnnieUseYourTelescope',
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.15,
                     ),
                   ),
                   SizedBox(height: 2.h),
                 } else ...{
                   ListView.builder(
                     shrinkWrap: true,
-                    padding: EdgeInsets.all(2.h),
+                    padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: eventController.friendEvents.length,
                     itemBuilder: (context, index) {
                       final friendEvent = eventController.friendEvents[index];
-                      final time = DateFormat('dd, MMMM, yyyy | h:mm a')
+                      final time = DateFormat('E, d MMM, yyyy | h:mm a')
                           .format(friendEvent.time);
-                      Map profile =
+                      final profile =
                           userInformationController.userData.value['Profile'];
+                      final profileName = profile is Map
+                          ? (profile['fullname'] ?? profile['username'] ?? '')
+                          : '';
 
                       return UpcomingEventCard(
                         onTap: () {
@@ -207,16 +253,15 @@ class _FriendsEventsScreenState extends State<FriendsEventsScreen> {
                               context,
                               friendEvent,
                               time,
-                              profile['fullname'] ?? profile['username'],
+                              profileName,
                             );
                           }
                         },
                         title: friendEvent.name,
-                        posterUrl: friendEvent.image ?? '',
+                        posterUrl: friendEvent.getEventPoster(widget.profile.profilePic),
                         byAuthor: friendEvent.user?.profile.fullname ??
                             friendEvent.user?.profile.username ??
-                            profile['fullname'] ??
-                            profile['username'],
+                            profileName,
                         time: time,
                       );
                     },
@@ -227,6 +272,9 @@ class _FriendsEventsScreenState extends State<FriendsEventsScreen> {
           ),
         ),
       ),
+    ],
+  ),
+),
       floatingActionButton: userInformationController.isInfluencer.value
           ? FloatingActionButton(
               backgroundColor: primaryColor,

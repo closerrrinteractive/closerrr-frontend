@@ -21,6 +21,7 @@ import '../../../../../core/utils/constant.dart';
 import '../../../../../core/utils/img_string.dart';
 import '../../../../controller/authentication/auth_controller.dart';
 import '../../../../controller/routing/routing_controller.dart';
+import 'package:closerrr/core/config/haptic_helper.dart';
 import '../../../../controller/settings_controller/settings_controller.dart';
 import '../../../popup/setting/delete_account_popup.dart';
 import '../../../widgets/custom_widgets/custom_button.dart';
@@ -160,159 +161,195 @@ class _ManageAccountState extends State<ManageAccount> {
     return PopScope(
       child: Scaffold(
         backgroundColor: whiteColor,
-        appBar: _buildAppBar(widthScale),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildProfilePictureSection(widthScale),
-                SizedBox(height: 4.h),
-                _buildTextFieldSection(
-                  widthScale,
-                  'Username',
-                  usernameController,
-                  'assets/svg/field_person.svg',
-                  false,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Container(
+            decoration: BoxDecoration(
+              color: whiteColor,
+              boxShadow: [
+                BoxShadow(
+                  color: blueBack.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-                SizedBox(height: 4.h),
-                _buildTextFieldSection(
-                  widthScale,
-                  'Fullname',
-                  fullnameController,
-                  'assets/svg/field_person.svg',
-                  true,
-                ),
-                SizedBox(height: 4.h),
-                _buildGenderSection(widthScale),
-                SizedBox(height: 4.h),
-                _buildTextFieldSection(
-                  widthScale,
-                  'City/State/Country',
-                  addressController,
-                  'assets/svg/location.svg',
-                  false,
-                ),
-                SizedBox(height: 4.h),
-                _buildBirthdaySection(widthScale),
-                SizedBox(height: 4.h),
-                _buildPhoneNumberSection(widthScale),
-                SizedBox(height: 4.h),
-                _buildEmailSection(widthScale),
-                SizedBox(height: 4.h),
-                if (!uiController.isInfluencer.value)
-                  _buildDeleteAccountButton(widthScale)
-                else
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: "Note: For Delete Account ",
-                              style: CustomTextStyle
-                                  .styledTextWidget.bodyMedium!
-                                  .copyWith(
-                                color: failed,
-                                fontSize: (widthScale * kTextFormFactor) * 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            TextSpan(
-                              text: "Contact Us",
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  RouterController.current.pushNamed(
-                                    Routes.contactUs,
-                                  );
-                                },
-                              style: CustomTextStyle
-                                  .styledTextWidget.bodyMedium!
-                                  .copyWith(
-                                color: blueBack,
-                                fontSize: (widthScale * kTextFormFactor) * 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
               ],
             ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        HapticHelper.trigger(type: HapticFeedbackType.light);
+                        RouterController.current.pop();
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: whiteColor,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: blackColor.withOpacity(0.08),
+                                  blurRadius: 8,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                            child: SvgPicture.asset(
+                              backSvgIcon,
+                              width: 40,
+                              height: 40,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Manage Account',
+                            style: TextStyle(
+                              fontFamily: 'Hellix',
+                              color: primaryColor,
+                              fontWeight: FontWeight.w700,
+                              fontSize: (widthScale * kTextFormFactor) * 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    Obx(() => CustomButton(
+                          height: 40,
+                          borderRadius: 16,
+                          padding: const EdgeInsets.all(0),
+                          buttonTitle: 'SAVE',
+                          titleStyle:
+                              CustomTextStyle.styledTextWidget.titleSmall!.copyWith(
+                            color: isSomethingChanged.value
+                                ? primaryColor
+                                : primaryColor.withOpacity(0.5),
+                            fontSize: (widthScale * kTextFormFactor) * 14,
+                            letterSpacing: 2,
+                          ),
+                          onPress: isSomethingChanged.value ? _onSave : () {},
+                          backButtonColor: whiteColor,
+                          isTextStyle: true,
+                          bordercolor: BorderSide(
+                            width: 1,
+                            color: isSomethingChanged.value
+                                ? primaryColor
+                                : primaryColor.withOpacity(0.2),
+                          ),
+                          onlyText: true,
+                        )),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        body: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildProfilePictureSection(widthScale),
+                        SizedBox(height: 4.h),
+                        _buildTextFieldSection(
+                          widthScale,
+                          'Username',
+                          usernameController,
+                          'assets/svg/field_person.svg',
+                          false,
+                        ),
+                        SizedBox(height: 4.h),
+                        _buildTextFieldSection(
+                          widthScale,
+                          'Fullname',
+                          fullnameController,
+                          'assets/svg/field_person.svg',
+                          true,
+                        ),
+                        SizedBox(height: 4.h),
+                        _buildGenderSection(widthScale),
+                        SizedBox(height: 4.h),
+                        _buildTextFieldSection(
+                          widthScale,
+                          'City/State/Country',
+                          addressController,
+                          'assets/svg/location.svg',
+                          false,
+                        ),
+                        SizedBox(height: 4.h),
+                        _buildBirthdaySection(widthScale),
+                        SizedBox(height: 4.h),
+                        _buildPhoneNumberSection(widthScale),
+                        SizedBox(height: 4.h),
+                        _buildEmailSection(widthScale),
+                        SizedBox(height: 4.h),
+                        if (!uiController.isInfluencer.value)
+                          _buildDeleteAccountButton(widthScale)
+                        else
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: "Note: For Delete Account ",
+                                      style: CustomTextStyle
+                                          .styledTextWidget.bodyMedium!
+                                          .copyWith(
+                                        color: failed,
+                                        fontSize: (widthScale * kTextFormFactor) * 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: "Contact Us",
+                                      recognizer: TapGestureRecognizer()
+                                        ..onTap = () {
+                                          RouterController.current.pushNamed(
+                                            Routes.contactUs,
+                                          );
+                                        },
+                                      style: CustomTextStyle
+                                          .styledTextWidget.bodyMedium!
+                                          .copyWith(
+                                        color: blueBack,
+                                        fontSize: (widthScale * kTextFormFactor) * 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  AppBar _buildAppBar(double widthScale) {
-    return AppBar(
-      leading: Container(),
-      leadingWidth: 0,
-      toolbarHeight: 9.h,
-      surfaceTintColor: transparentColor,
-      elevation: 12,
-      backgroundColor: whiteColor,
-      shadowColor: blueBack.withOpacity(0.1),
-      title: Padding(
-        padding: EdgeInsets.only(bottom: 1.h),
-        child: Row(
-          children: [
-            InkWell(
-              onTap: () => RouterController.current.pop(),
-              overlayColor: const WidgetStatePropertyAll(transparentColor),
-              child: Image(
-                image: const AssetImage(
-                  backIcon,
-                ),
-                height: 5.5.h,
-              ),
-            ),
-            SizedBox(width: 1.w),
-            Text(
-              'Manage Account',
-              style: CustomTextStyle.styledTextWidget.bodyLarge?.copyWith(
-                color: primaryColor,
-                fontSize: (widthScale * kTextFormFactor) * 20,
-                fontWeight: FontWeight.w900,
-                fontFamily: 'Circe',
-              ),
-            ),
-            const Spacer(),
-            Obx(() => CustomButton(
-                  height: 40,
-                  borderRadius: 16,
-                  padding: const EdgeInsets.all(0),
-                  buttonTitle: 'SAVE',
-                  titleStyle:
-                      CustomTextStyle.styledTextWidget.titleSmall!.copyWith(
-                    color: isSomethingChanged.value
-                        ? primaryColor
-                        : primaryColor.withOpacity(0.5),
-                    fontSize: (widthScale * kTextFormFactor) * 14,
-                    letterSpacing: 2,
-                  ),
-                  onPress: isSomethingChanged.value ? _onSave : () {},
-                  backButtonColor: whiteColor,
-                  isTextStyle: true,
-                  bordercolor: BorderSide(
-                    width: 1,
-                    color: isSomethingChanged.value
-                        ? primaryColor
-                        : primaryColor.withOpacity(0.2),
-                  ),
-                  onlyText: true,
-                )),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildProfilePictureSection(double widthScale) {
     return Column(

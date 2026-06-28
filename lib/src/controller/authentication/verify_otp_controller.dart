@@ -1,5 +1,6 @@
 import 'package:closerrr/core/services/custom_services.dart';
 import 'package:closerrr/core/utils/api_string.dart';
+import 'package:closerrr/core/utils/img_string.dart';
 import 'package:closerrr/main.dart';
 import 'package:closerrr/src/controller/user_information/user_info_controller.dart';
 import 'package:flutter/material.dart';
@@ -53,6 +54,21 @@ class VerifyOtpController extends GetxController {
         CustomLoader.hide();
         if (verifyEvent == "forgot_password") {
           RouterController.current.pushReplacement('/reset-password');
+        } else if (verifyEvent == "signin") {
+          final userData = response.data['data'];
+          final isOnboarded = userData['is_onboarded'] == true ||
+              userData['is_onboarded'] == 1;
+          if (isOnboarded) {
+            RouterController.current.push(
+              '/transition',
+              extra: {'imagePath': bringCloserrr},
+            );
+            await Future.delayed(const Duration(seconds: 2));
+            final route = userData['role_id'] == 3 ? '/chat' : '/explore';
+            RouterController.current.go(route);
+          } else {
+            RouterController.current.pushReplacement('/onboard-profile');
+          }
         } else {
           RouterController.current.pushReplacement('/onboard-profile');
         }

@@ -105,7 +105,7 @@ class FAQData {
 class FaqCategory {
   int id;
   String name;
-  String description;
+  String? description;
   int displayOrder;
   bool isActive;
   DateTime faqCategoryCreatedAt;

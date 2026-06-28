@@ -10,8 +10,14 @@ plugins {
 android {
     namespace = "com.sharkbrewsinternational.closerrr"
     compileSdkVersion 36
-    // ndkVersion = flutter.ndkVersion
+    // NDK r28+ is ideal for 16 KB page size; using r27 until r28 is installed via Android Studio SDK Manager
     ndkVersion = "27.0.12077973"
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17

@@ -1,16 +1,29 @@
+import 'dart:io';
+
 class ApiStrings {
-  // static String get baseUrl {
-  //   final UserInformationController userInformationController = Get.find();
-  //   // return 'http://${userInformationController.ipAddress.value}:5253/api/v1/';
-  //   return 'http://192.168.92.133:5253/api/v1/';
-  // }
-  // static const String baseUrl =
-  //     'https://d0m8w517-5253.inc1.devtunnels.ms/api/v1/';
-  // static const String imageUrl = 'https://d0m8w517-5253.inc1.devtunnels.ms/';
-  // static const String socketUrl = 'https://d0m8w517-5253.inc1.devtunnels.ms/';
-  static const String baseUrl = 'https://app.closerrr.com/closerrr/api/v1/';
-  static const String imageUrl = 'https://app.closerrr.com/closerrr/';
-  static const String socketUrl = 'https://app.closerrr.com/';
+  /// Mac Wi‑Fi IP for physical devices (same network as phone).
+  /// Update with `ipconfig getifaddr en0` if your network changes.
+  static const String _macLanIp = '192.168.29.7';
+
+  static bool get _isIOSSimulator {
+    if (!Platform.isIOS) return false;
+    return Platform.environment.containsKey('SIMULATOR_DEVICE_NAME');
+  }
+
+  static String get _host {
+    if (Platform.isAndroid) {
+      // Physical Android over USB: run `adb reverse tcp:5253 tcp:5253`
+      return '127.0.0.1';
+    }
+    if (Platform.isIOS && !_isIOSSimulator) {
+      return _macLanIp;
+    }
+    return 'localhost';
+  }
+
+  static String get baseUrl => 'http://$_host:5253/api/v1/';
+  static String get imageUrl => 'http://$_host:5253/';
+  static String get socketUrl => 'http://$_host:5253/';
   static const String creatorTermsCondtions = 'https://closerrr.com/creator/termsandconditions';
   static const String creatorPrivacyPolicy = 'https://closerrr.com/creator/privacyandpolicy';
   static const String fanTermsCondtions = 'https://closerrr.com/TermsAndCondition';

@@ -5,6 +5,7 @@ import 'package:closerrr/src/models/setting/payout_upcomming.dart';
 import 'package:closerrr/src/models/setting/subscription_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/services/custom_services.dart';
 import '../../../services/setting_services.dart';
@@ -71,7 +72,8 @@ class SettingScreenController extends GetxController {
   Future<void> getNotifications({
     int? id,
   }) async {
-    final influencerId = id ?? uiController.userData.value['id'];
+    final myId = uiController.userData.value['id'];
+    final influencerId = id ?? myId;
     final response = await settingServices.getNotifications(
       id: influencerId.toString(),
     );
@@ -79,6 +81,26 @@ class SettingScreenController extends GetxController {
       (l) => kLog(l),
       (r) async {
         notifications.value = r.data;
+        final prefs = await SharedPreferences.getInstance();
+        final prefix = (id == null || id == myId) ? '' : '_$id';
+        await prefs.setBool('enabled_messages$prefix', r.data.messagesEnabled);
+        await prefs.setBool('enabled_events$prefix', r.data.eventsEnabled);
+        await prefs.setBool('enabled_live$prefix', r.data.callsEnabled || r.data.liveStreamEnabled);
+        await prefs.setBool('enabled_stories$prefix', r.data.storiesEnabled);
+
+        // Sync call tone
+        final liveSoundKey = (id == null || id == myId) ? 'call_ringtone' : 'call_ringtone_$id';
+        final rawTone = r.data.callTone;
+        String resolvedTone = 'Haven';
+        if (rawTone != null && rawTone.isNotEmpty) {
+          if (rawTone == 'Default') {
+            resolvedTone = 'Haven';
+          } else {
+            resolvedTone = rawTone;
+          }
+        }
+        await prefs.setString(liveSoundKey, resolvedTone);
+        await prefs.setString('${liveSoundKey}_title', resolvedTone);
       },
     );
   }
@@ -183,8 +205,8 @@ class SettingScreenController extends GetxController {
   }
 
   /// [GET] [FAQs]
-  Future<void> getFaqCategories() async {
-    final response = await settingServices.getFaqCategories();
+  Future<void> getFaqCategories({String? audience}) async {
+    final response = await settingServices.getFaqCategories(audience: audience);
     response.fold(
       (l) => kLog(l),
       (r) async {
@@ -194,8 +216,9 @@ class SettingScreenController extends GetxController {
     );
   }
 
-  Future<void> getFaq({required int categoryId}) async {
-    final response = await settingServices.getFaq(categoryId: categoryId);
+  Future<void> getFaq({int? categoryId, String? search, String? audience}) async {
+    final response = await settingServices.getFaq(
+        categoryId: categoryId, search: search, audience: audience);
     response.fold(
       (l) => kLog(l),
       (r) async {

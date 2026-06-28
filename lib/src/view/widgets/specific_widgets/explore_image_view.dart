@@ -23,11 +23,11 @@ class ExploreImageView extends StatelessWidget {
       height: height,
       width: width,
       margin: EdgeInsets.symmetric(
-        vertical: isActive ? 10 : 36,
-        horizontal: isActive ? 10 : 16,
+        vertical: isActive ? 8 : 36,
+        horizontal: isActive ? 8 : 12,
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         child: CachedNetworkImage(
           imageUrl: '${ApiStrings.imageUrl}${showcaseData.path}',
           fit: BoxFit.cover,

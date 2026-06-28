@@ -48,19 +48,12 @@ class _SettingScreenState extends State<SettingScreen> {
               'influencerId': userData['id'].toString(),
               'isInfluencer': true,
             }),
-      if (isRoleId3)
-        () => RouterController.current.goNamed('notification_settings'),
       if (isRoleId3) () => RouterController.current.goNamed('my_payouts'),
-      // if (isRoleId3)
-      //   () => RouterController.current.goNamed('dashboard_and_analytics'),
+      () => RouterController.current.goNamed('notification_settings'),
+      () => RouterController.current.goNamed('preferences'),
       () => RouterController.current.goNamed('faqs_and_about'),
-      () => isRoleId3
-          ? Helpers.openLink(ApiStrings.creatorTermsCondtions)
-          : Helpers.openLink(ApiStrings.fanTermsCondtions),
-      () => isRoleId3
-          ? Helpers.openLink(ApiStrings.creatorPrivacyPolicy)
-          : Helpers.openLink(ApiStrings.fanPrivacyPolicy),
       () => RouterController.current.goNamed('contact_us'),
+      () => RouterController.current.goNamed('about'),
       () => showDialog(
             context: context,
             builder: (context) => const LogutPopup(),
@@ -79,22 +72,45 @@ class _SettingScreenState extends State<SettingScreen> {
         gif: settingsGif,
       ),
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 5.w),
+        padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.w),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(100),
-                child: CachedNetworkImage(
-                  imageUrl: ApiStrings.imageUrl + profilePic,
-                  fit: BoxFit.cover,
-                  width: 140,
-                  height: 140,
-                  errorWidget: (context, url, error) {
-                    return Image.asset(person);
-                  },
-                ),
+                child: profilePic.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: ApiStrings.imageUrl + profilePic,
+                        fit: BoxFit.cover,
+                        width: 140,
+                        height: 140,
+                        placeholder: (context, url) => Container(
+                          width: 140,
+                          height: 140,
+                          color: primaryColor.withOpacity(0.1),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: primaryColor,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Image.asset(
+                          person,
+                          width: 140,
+                          height: 140,
+                          fit: BoxFit.cover,
+                          color: primaryColor,
+                        ),
+                      )
+                    : Image.asset(
+                        person,
+                        width: 140,
+                        height: 140,
+                        fit: BoxFit.cover,
+                        color: primaryColor,
+                      ),
               ),
               SizedBox(height: 2.h),
               Text(
@@ -104,9 +120,21 @@ class _SettingScreenState extends State<SettingScreen> {
                 style: CustomTextStyle.styledTextWidget.bodyLarge!.copyWith(
                   fontSize: (widthScale * kTextFormFactor) * 24,
                   color: primaryColor,
+                  fontWeight: FontWeight.w700,
                   fontFamily: 'Hellix',
                 ),
               ),
+              if (userData['Profile']?['username'] != null || userData['username'] != null) ...[
+                Text(
+                  '@${userData['Profile']?['username'] ?? userData['username']}',
+                  style: CustomTextStyle.styledTextWidget.bodyMedium!.copyWith(
+                    fontSize: (widthScale * kTextFormFactor) * 16,
+                    color: primaryColor.withOpacity(0.6),
+                    fontWeight: FontWeight.w400,
+                    fontFamily: 'Hellix',
+                  ),
+                ),
+              ],
               SizedBox(height: 2.h),
               ListView.builder(
                 shrinkWrap: true,
@@ -118,12 +146,12 @@ class _SettingScreenState extends State<SettingScreen> {
                     'Manage Account',
                     if (!isRoleId3) 'My Friends',
                     if (isRoleId3) 'Manage Showcase Profile',
-                    if (isRoleId3) 'Notification Settings',
                     if (isRoleId3) 'My Payouts',
-                    'FAQs & About',
-                    'Terms & Conditions',
-                    'Privacy Policy',
+                    'Notifications',
+                    'Preferences',
+                    'FAQs',
                     'Contact Us',
+                    'About',
                     'Logout',
                   ];
 
@@ -131,12 +159,12 @@ class _SettingScreenState extends State<SettingScreen> {
                     manageAccount,
                     if (!isRoleId3) friends,
                     if (isRoleId3) manageShowcase,
-                    if (isRoleId3) notificationSettings,
                     if (isRoleId3) myPayouts,
-                    faqAbout,
-                    termAndConditions,
-                    privacyPolicy,
+                    'notificationbell',
+                    'controls',
+                    faqs,
                     contactUs,
+                    about,
                     logout,
                   ];
 

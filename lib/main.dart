@@ -99,6 +99,30 @@ Future<void> main() async {
               locale: const Locale('en'),
               debugShowCheckedModeBanner: false,
               routerConfig: router.router,
+              builder: (context, child) {
+                final double originalBottom = MediaQuery.of(context).padding.bottom;
+                final double bottomPadding;
+                if (originalBottom > 0) {
+                  if (originalBottom < 40.0) {
+                    bottomPadding = 0.0;
+                  } else {
+                    bottomPadding = originalBottom;
+                  }
+                } else {
+                  bottomPadding = 0.0;
+                }
+                return MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    padding: MediaQuery.of(context).padding.copyWith(
+                      bottom: bottomPadding,
+                    ),
+                    viewPadding: MediaQuery.of(context).viewPadding.copyWith(
+                      bottom: bottomPadding,
+                    ),
+                  ),
+                  child: child ?? const SizedBox(),
+                );
+              },
             ),
           );
         });

@@ -5,6 +5,7 @@ import 'package:closerrr/src/models/chat/chat_messages_model.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
@@ -16,6 +17,7 @@ import '../src/models/chat/story/story_model.dart';
 
 class ChatServices {
   final HttpService httpService = HttpService();
+  static const MethodChannel _galleryChannel = MethodChannel('com.closerrr.app/gallery');
 
   /// [1]
   Future<Either<Failure, ChatModel>> getChats({
@@ -298,8 +300,8 @@ class ChatServices {
     required String mediaUrl,
     required ValueNotifier<double> progressNotifier,
   }) async {
-    final downloadPath = await getExternalStorageDirectories();
-    final filePath = '${downloadPath!.first.path}/${mediaUrl.split('/').last}';
+    final tempDir = await getTemporaryDirectory();
+    final filePath = '${tempDir.path}/${mediaUrl.split('/').last}';
     try {
       await Dio().download(
         mediaUrl,
@@ -312,7 +314,19 @@ class ChatServices {
         },
       );
 
-      return Right({'file_path': filePath});
+      try {
+        final bool? success = await _galleryChannel.invokeMethod<bool>(
+          'saveFileToGallery',
+          {'path': filePath},
+        );
+        if (success == true) {
+          return Right({'file_path': filePath});
+        } else {
+          return Left(ServerFailure(message: 'Failed to save media to gallery.'));
+        }
+      } on PlatformException catch (pe) {
+        return Left(ServerFailure(message: pe.message ?? 'Error saving media to gallery.'));
+      }
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }

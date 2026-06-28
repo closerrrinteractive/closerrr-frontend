@@ -2,10 +2,13 @@ import 'package:closerrr/core/themes/colors.dart';
 import 'package:closerrr/core/themes/text_style.dart';
 import 'package:closerrr/core/utils/api_string.dart';
 import 'package:closerrr/core/utils/img_string.dart';
-import 'package:closerrr/src/models/events/get_all_friends.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sizer/sizer.dart';
+import 'package:get/get.dart';
+import 'package:closerrr/src/controller/user_information/user_info_controller.dart';
 
+import 'package:closerrr/core/config/haptic_helper.dart';
 import '../../../../../core/utils/constant.dart';
 import '../../../../../core/utils/constant_string.dart';
 import '../../../../controller/routing/routing_controller.dart';
@@ -17,30 +20,48 @@ void showCustomBottomSheet(
   String time,
   String userName,
 ) {
-  Profile? profile = friendEvent.user?.profile;
+  final UserInformationController userInformationController = Get.find<UserInformationController>();
+  final currentUserProfile = userInformationController.userData.value['Profile'];
+
+  String eventByAuthor = userName;
+  String? authorUsername;
+
+  if (friendEvent.user != null) {
+    eventByAuthor = friendEvent.user?.profile.fullname ?? friendEvent.user?.profile.username ?? userName;
+    authorUsername = friendEvent.user?.profile.username;
+  } else if (currentUserProfile is Map) {
+    eventByAuthor = currentUserProfile['fullname'] ?? currentUserProfile['username'] ?? userName;
+    authorUsername = currentUserProfile['username'];
+  }
+
+  final String currentUserProfilePic = currentUserProfile is Map ? currentUserProfile['profile_pic'] ?? '' : '';
+  final String influencerPic = friendEvent.user?.profile.profilePic ?? currentUserProfilePic;
+  final String resolvedPoster = friendEvent.getEventPoster(currentUserProfilePic);
+
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: transparentColor,
     builder: (context) {
-      return DraggableScrollableSheet(
-        initialChildSize: 0.8,
-        minChildSize: 0.5,
-        maxChildSize: 1.0,
-        builder: (context, scrollController) {
-          return SingleChildScrollView(
-            controller: scrollController,
-            child: EventBottomSheetDetails(
-              eventPoster:
-                  friendEvent.image ?? 'https://via.placeholder.com/150',
-              eventName: friendEvent.name,
-              eventDateAndTime: time,
-              eventVenue: friendEvent.venue,
-              eventDetails: friendEvent.details ?? '',
-              eventByAuthor: profile?.fullname ?? profile?.username ?? userName,
-            ),
-          );
-        },
+      return Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: 90.h,
+          ),
+          child: EventBottomSheetDetails(
+            eventPoster: resolvedPoster,
+            eventName: friendEvent.name,
+            eventDateAndTime: time,
+            eventVenue: friendEvent.venue,
+            eventDetails: friendEvent.details ?? '',
+            eventByAuthor: eventByAuthor,
+            authorUsername: authorUsername,
+            influencerProfilePic: influencerPic,
+          ),
+        ),
       );
     },
   );
@@ -55,6 +76,8 @@ class EventBottomSheetDetails extends StatelessWidget {
     required this.eventVenue,
     required this.eventDetails,
     required this.eventByAuthor,
+    this.authorUsername,
+    this.influencerProfilePic,
   });
 
   final String eventPoster;
@@ -63,12 +86,13 @@ class EventBottomSheetDetails extends StatelessWidget {
   final String eventVenue;
   final String eventDetails;
   final String eventByAuthor;
+  final String? authorUsername;
+  final String? influencerProfilePic;
 
   @override
   Widget build(BuildContext context) {
     final widthScale = MediaQuery.of(context).size.width / kDesignWidth;
     return Container(
-      height: 100.h,
       decoration: const BoxDecoration(
         color: whiteColor,
         borderRadius: BorderRadius.only(
@@ -76,15 +100,28 @@ class EventBottomSheetDetails extends StatelessWidget {
           topRight: Radius.circular(32),
         ),
       ),
-      child: Column(
-        children: <Widget>[
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(32),
+          topRight: Radius.circular(32),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
           Stack(
             children: [
               GestureDetector(
                 onTap: () {
+                  HapticHelper.trigger(type: HapticFeedbackType.light);
+                  Navigator.pop(context);
                   RouterController.current
-                      .goNamed('image_preview_screen', extra: {
-                    'eventPoster': eventPoster,
+                      .pushNamed('image_preview_screen', extra: {
+                    'imagesToPreview': [eventPoster],
+                    'isEvent': true,
+                    'eventName': eventName,
+                    'eventTime': eventDateAndTime,
+                    'influencerProfilePic': influencerProfilePic,
                   });
                 },
                 child: ClipRRect(
@@ -106,8 +143,8 @@ class EventBottomSheetDetails extends StatelessWidget {
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                         return SizedBox(
-                          width: 80,
-                          height: 100,
+                          width: double.maxFinite,
+                          height: 320,
                           child: Image.asset(
                             Constants.eventImage,
                             fit: BoxFit.cover,
@@ -127,7 +164,7 @@ class EventBottomSheetDetails extends StatelessWidget {
                   margin: EdgeInsets.symmetric(horizontal: 45.w, vertical: 2.w),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    color: const Color(0xFFEFDDFF),
+                    color: primaryColor,
                   ),
                 ),
               ),
@@ -135,10 +172,14 @@ class EventBottomSheetDetails extends StatelessWidget {
                 right: 2.h,
                 top: 2.h,
                 child: InkWell(
-                  onTap: () => RouterController.current.pop(context),
-                  child: Image(
-                    image: const AssetImage(crossIcon),
+                  onTap: () {
+                    HapticHelper.trigger(type: HapticFeedbackType.light);
+                    RouterController.current.pop(context);
+                  },
+                  child: SvgPicture.asset(
+                    piccrossSvgIcon,
                     height: 3.h,
+                    width: 3.h,
                   ),
                 ),
               )
@@ -175,10 +216,25 @@ class EventBottomSheetDetails extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(height: 2.h),
+          if (authorUsername != null && authorUsername!.isNotEmpty) ...[
+            Center(
+              child: Text(
+                authorUsername!.startsWith('@') ? authorUsername!.toLowerCase() : "@${authorUsername!.toLowerCase()}",
+                style: CustomTextStyle.styledTextWidget.bodyLarge!.copyWith(
+                  color: textColor,
+                  fontSize: (widthScale * kTextFormFactor) * 12,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Hellix',
+                ),
+              ),
+            ),
+          ],
+          SizedBox(height: 3.h),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 }
 

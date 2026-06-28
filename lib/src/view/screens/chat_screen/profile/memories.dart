@@ -7,9 +7,9 @@ import 'package:closerrr/core/utils/constant.dart';
 import 'package:closerrr/src/controller/chat/chat_controller.dart'
     as LocalChatController;
 import 'package:closerrr/src/models/chat/chat_memories.dart' show MemoriesData;
+import 'package:closerrr/src/controller/routing/routing_controller.dart';
 import 'package:closerrr/src/models/chat/chat_messages_model.dart';
 import 'package:closerrr/src/view/widgets/custom_widgets/custom_popup_btn.dart';
-import 'package:closerrr/src/view/widgets/specific_widgets/chat/chat_app_bar.dart';
 import 'package:closerrr/src/view/widgets/specific_widgets/chat/custom_chat_bubble.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +20,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sizer/sizer.dart';
+import 'package:closerrr/core/utils/img_string.dart';
 
 import '../../../../controller/authentication/auth_controller.dart';
 import '../../../../models/chat/chat_model.dart';
@@ -104,9 +105,68 @@ class _MemoriesState extends State<Memories> {
   Widget build(BuildContext context) {
     final widthScale = MediaQuery.of(context).size.width / kDesignWidth;
     return Scaffold(
-      appBar: ChatAppBar(
-        chatTitle: 'Memories',
-        isChatSetting: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: BoxDecoration(
+            color: whiteColor,
+            boxShadow: [
+              BoxShadow(
+                color: blueBack.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => RouterController.current.pop(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: whiteColor,
+                            boxShadow: [
+                              BoxShadow(
+                                color: blackColor.withOpacity(0.08),
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: SvgPicture.asset(
+                            backSvgIcon,
+                            width: 40,
+                            height: 40,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Memories',
+                          style: TextStyle(
+                            fontFamily: 'Hellix',
+                            color: primaryColor,
+                            fontWeight: FontWeight.w700,
+                            fontSize: (widthScale * kTextFormFactor) * 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
       body: Stack(
         children: [

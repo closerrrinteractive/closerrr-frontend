@@ -16,12 +16,20 @@ class ImagePreviewScreen extends StatefulWidget {
     this.isChat,
     this.chatAdmin,
     this.chat,
+    this.isEvent,
+    this.eventName,
+    this.eventTime,
+    this.influencerProfilePic,
   });
   final List<String> imagesToPreview;
   final int? index;
   final bool? isChat;
   final UserProfile? chatAdmin;
   final ChatRowData? chat;
+  final bool? isEvent;
+  final String? eventName;
+  final String? eventTime;
+  final String? influencerProfilePic;
 
   @override
   State<ImagePreviewScreen> createState() => _ImagePreviewScreenState();
@@ -41,11 +49,12 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     return Scaffold(
       appBar: ChatAppBar(
         isMediaView: true,
-        // loggedInUser: widget.isChat ?? false
-        //     ? widget.imagesToPreview[0]
-        //     : widget.imagesToPreview[0],
         chatAdmin: widget.chatAdmin,
         chatIcon: widget.chat?.groupIcon,
+        isEventPreview: widget.isEvent,
+        eventName: widget.eventName,
+        eventTime: widget.eventTime,
+        influencerProfilePic: widget.influencerProfilePic,
         controlTap: () {
           showDialog(
             context: context,
@@ -57,6 +66,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                   : '',
               id: 0,
               chat: widget.chat,
+              simulateError: false,
             ),
           );
         },
@@ -84,6 +94,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                             media: imageUrl,
                             id: 0,
                             mediaDownloadTitle: "Image",
+                            simulateError: false,
                           ),
                         );
                       },

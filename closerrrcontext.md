@@ -1,5 +1,5 @@
 # CLOSERRR — COMPLETE PROJECT CONTEXT DOCUMENT
-### FOR AI ASSISTANT: Read this entire document before doing ANYTHING. This is the full context of the project.
+### FOR AI: Read **`../workcontext.md`** fully at session start. Read this file only when workcontext.md says you need deeper product/architecture detail.
 
 ---
 

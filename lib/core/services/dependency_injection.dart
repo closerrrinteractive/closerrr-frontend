@@ -23,6 +23,8 @@ import '../../src/controller/explore_controllers/explore_screen_controller.dart'
 import '../../src/controller/live/live_controller.dart';
 import '../../src/controller/routing/routing_controller.dart';
 import '../../src/controller/settings_controller/settings_controller.dart';
+import '../../src/controller/settings_controller/preferences_controller.dart';
+import '../../src/services/app_lock_service.dart';
 
 class DependencyInjection {
   static final dio = Dio(BaseOptions(baseUrl: ApiStrings.baseUrl));
@@ -42,9 +44,11 @@ class DependencyInjection {
     Get.put(PickImageController());
     Get.put(ChatController(dio));
     Get.put(ExploreScreenController());
-    Get.lazyPut(() => EventScreenController());
+    Get.put(EventScreenController());
     Get.put(GoogleMapsController());
     Get.put(SettingScreenController());
+    Get.put(PreferencesController());
+    Get.put(AppLockService());
     Get.put(LiveController());
     Get.put(RouterController());
     Get.put(AppLinkController());

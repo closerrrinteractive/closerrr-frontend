@@ -3,11 +3,13 @@ import 'package:closerrr/core/utils/img_string.dart';
 import 'package:closerrr/src/controller/settings_controller/settings_controller.dart';
 import 'package:closerrr/src/view/widgets/specific_widgets/custom_setting_tile.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../../../../core/themes/colors.dart';
 import '../../../../../core/utils/constant.dart';
+import 'package:closerrr/core/config/haptic_helper.dart';
 import '../../../../controller/routing/routing_controller.dart';
 
 class CreatorFaq extends StatefulWidget {
@@ -23,7 +25,7 @@ class _CreatorFaqState extends State<CreatorFaq> {
   @override
   void initState() {
     super.initState();
-    settingScreenController.getFaqCategories();
+    settingScreenController.getFaqCategories(audience: "creator");
   }
 
   @override
@@ -31,56 +33,83 @@ class _CreatorFaqState extends State<CreatorFaq> {
     final double widthScale = MediaQuery.of(context).size.width / kDesignWidth;
     return Scaffold(
       backgroundColor: whiteColor,
-      appBar: AppBar(
-        leading: Container(),
-        leadingWidth: 0,
-        toolbarHeight: 8.h,
-        surfaceTintColor: transparentColor,
-        elevation: 12,
-        backgroundColor: whiteColor,
-        shadowColor: blueBack.withOpacity(0.1),
-        title: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            InkWell(
-              onTap: () => RouterController.current.pop(),
-              overlayColor: const WidgetStatePropertyAll(transparentColor),
-              child: Image(
-                image: const AssetImage(
-                  backIcon,
-                ),
-                height: 5.5.h,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: BoxDecoration(
+            color: whiteColor,
+            boxShadow: [
+              BoxShadow(
+                color: blueBack.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      HapticHelper.trigger(type: HapticFeedbackType.light);
+                      RouterController.current.pop();
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: whiteColor,
+                            boxShadow: [
+                              BoxShadow(
+                                color: blackColor.withOpacity(0.08),
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: SvgPicture.asset(
+                            backSvgIcon,
+                            width: 40,
+                            height: 40,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Creator FAQs',
+                          style: TextStyle(
+                            fontFamily: 'Hellix',
+                            color: primaryColor,
+                            fontWeight: FontWeight.w700,
+                            fontSize: (widthScale * kTextFormFactor) * 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(width: 1.w),
-            Text(
-              'Creator FAQs',
-              style: CustomTextStyle.styledTextWidget.bodyLarge?.copyWith(
-                color: primaryColor,
-                fontSize: (widthScale * kTextFormFactor) * 20,
-                fontWeight: FontWeight.w900,
-                fontFamily: 'Circe',
-              ),
-            ),
-            const Spacer(),
-            InkWell(
-              onTap: () => RouterController.current.pop(),
-              child: Image(
-                image: const AssetImage(
-                  searchIcon,
-                ),
-                height: 5.5.h,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: SingleChildScrollView(
-          child: Obx(() => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: SingleChildScrollView(
+                  child: Obx(() => Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                   Text(
                     'FAQs By Category',
                     style: CustomTextStyle.styledTextWidget.bodyLarge?.copyWith(
@@ -113,6 +142,7 @@ class _CreatorFaqState extends State<CreatorFaq> {
                               'title': settingScreenController
                                   .faqCategories[index].name,
                             }),
+                            letterSpacing: -0.3,
                             padding: EdgeInsets.only(bottom: 2.h),
                           )),
                   // TabTiles(
@@ -181,8 +211,12 @@ class _CreatorFaqState extends State<CreatorFaq> {
                   ),
                 ],
               )),
+            ),
+          ),
         ),
-      ),
-    );
+      ],
+    ),
+  ),
+);
   }
 }

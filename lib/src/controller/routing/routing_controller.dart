@@ -27,10 +27,12 @@ import 'package:closerrr/src/view/screens/onboarding_screens.dart/profile_onboar
 import 'package:closerrr/src/view/screens/onboarding_screens.dart/splash_screen.dart';
 import 'package:closerrr/src/view/screens/settings/settings_tabs/contact_us.dart';
 import 'package:closerrr/src/view/screens/settings/settings_tabs/dashbaord_and_analytics.dart';
+import 'package:closerrr/src/view/screens/settings/settings_tabs/about.dart';
 import 'package:closerrr/src/view/screens/settings/settings_tabs/faq_and_about.dart';
 import 'package:closerrr/src/view/screens/settings/settings_tabs/faq_and_about/account_and_profile.dart';
 import 'package:closerrr/src/view/screens/settings/settings_tabs/friends_tab.dart';
 import 'package:closerrr/src/view/screens/settings/settings_tabs/my_payouts.dart';
+import 'package:closerrr/src/view/screens/settings/settings_tabs/preferences.dart';
 import 'package:closerrr/src/view/screens/settings/settings_tabs/my_payouts/add_bank_account.dart';
 import 'package:closerrr/src/view/screens/settings/settings_tabs/my_payouts/payout_informations.dart';
 import 'package:closerrr/src/view/screens/settings/settings_tabs/term_and_policies.dart';
@@ -110,7 +112,8 @@ class RouterController extends GetxController {
         '/explore/explore-profile',
         extra: {
           'influencerId': influencerId,
-          'influencer': influencer.toJson()
+          'influencer': influencer.toJson(),
+          'navigationShell': navigationShellForOther,
         },
       );
     }
@@ -207,6 +210,7 @@ class RouterController extends GetxController {
             {
               'influencerId': influencerId,
               'influencer': influencer.toJson(),
+              'navigationShell': navigationShellForOther,
               'is_friend': extra['is_friend'],
             },
           );
@@ -279,7 +283,7 @@ class RouterController extends GetxController {
                 // Start both the home route check and timer simultaneously
                 final homeRouteFuture = getHomeRoute();
                 final minDurationFuture =
-                    Future.delayed(const Duration(seconds: 2));
+                    Future.delayed(const Duration(milliseconds: 3500));
 
                 // Wait for both to complete
                 final results =
@@ -382,6 +386,7 @@ class RouterController extends GetxController {
                               influencer:
                                   Influencer.fromJson(extra['influencer']),
                               showcaseData: extra['showcase_slides'],
+                              initialIndex: extra['initial_index'] ?? 0,
                             );
                           },
                           parentNavigatorKey: rootNavigatorKey,
@@ -465,8 +470,11 @@ class RouterController extends GetxController {
                           name: 'chat_notifications',
                           parentNavigatorKey: rootNavigatorKey,
                           pageBuilder: (context, state) {
-                            return const CupertinoPage(
-                              child: ChatNotification(),
+                            final extra = state.extra as Map<String, dynamic>?;
+                            return CupertinoPage(
+                              child: ChatNotification(
+                                influencerId: extra?['influencerId'] ?? extra?['influencer_id'],
+                              ),
                             );
                           },
                         ),
@@ -685,7 +693,7 @@ class RouterController extends GetxController {
                                     return CupertinoPage(
                                       child: ImagePreviewScreen(
                                         imagesToPreview:
-                                            extra['imagesToPreview'],
+                                            (extra['imagesToPreview'] as List?)?.cast<String>() ?? [],
                                         isChat: true,
                                       ),
                                     );
@@ -713,19 +721,24 @@ class RouterController extends GetxController {
                     );
                   },
                   routes: [
-                    GoRoute(
-                      path: '/image_preview_screen',
-                      name: 'image_preview_screen',
-                      parentNavigatorKey: rootNavigatorKey,
-                      pageBuilder: (context, state) {
-                        final extra = state.extra as Map<String, dynamic>;
-                        return CupertinoPage(
-                          child: ImagePreviewScreen(
-                            imagesToPreview: extra['imagesToPreview'],
-                          ),
-                        );
-                      },
-                    ),
+                     GoRoute(
+                       path: '/image_preview_screen',
+                       name: 'image_preview_screen',
+                       parentNavigatorKey: rootNavigatorKey,
+                       pageBuilder: (context, state) {
+                         final extra = state.extra as Map<String, dynamic>;
+                         return CupertinoPage(
+                           child: ImagePreviewScreen(
+                             imagesToPreview:
+                                 (extra['imagesToPreview'] as List?)?.cast<String>() ?? [],
+                             isEvent: extra['isEvent'] as bool?,
+                             eventName: extra['eventName'] as String?,
+                             eventTime: extra['eventTime'] as String?,
+                             influencerProfilePic: extra['influencerProfilePic'] as String?,
+                           ),
+                         );
+                       },
+                     ),
                     GoRoute(
                       path: '/upcoming_events',
                       name: 'upcoming_events',
@@ -775,7 +788,8 @@ class RouterController extends GetxController {
                                       state.extra as Map<String, dynamic>;
                                   return CupertinoPage(
                                     child: ImagePreviewScreen(
-                                      imagesToPreview: extra['imagesToPreview'],
+                                      imagesToPreview:
+                                          (extra['imagesToPreview'] as List?)?.cast<String>() ?? [],
                                     ),
                                   );
                                 },
@@ -839,6 +853,16 @@ class RouterController extends GetxController {
                       pageBuilder: (context, state) {
                         return const CupertinoPage(
                           child: ChatNotification(),
+                        );
+                      },
+                    ),
+                    GoRoute(
+                      path: '/preferences',
+                      name: 'preferences',
+                      parentNavigatorKey: rootNavigatorKey,
+                      pageBuilder: (context, state) {
+                        return const CupertinoPage(
+                          child: PreferencesScreen(),
                         );
                       },
                     ),
@@ -1030,6 +1054,16 @@ class RouterController extends GetxController {
                           },
                         ),
                       ],
+                    ),
+                    GoRoute(
+                      path: '/about',
+                      name: 'about',
+                      parentNavigatorKey: rootNavigatorKey,
+                      pageBuilder: (context, state) {
+                        return const CupertinoPage(
+                          child: AboutScreen(),
+                        );
+                      },
                     ),
                     // GoRoute(
                     //   path: '/manage_showcase_profile',

@@ -590,7 +590,7 @@
 //               return SplashScreen();
 //             } else if (snapshot.hasData) {
 //               WidgetsBinding.instance.addPostFrameCallback((_) {
-//                 Future.delayed(const Duration(seconds: 2), () {
+//                 Future.delayed(const Duration(seconds: 3), () {
 //                   // ignore: use_build_context_synchronously
 //                   context.go(snapshot.data!);
 //                 });

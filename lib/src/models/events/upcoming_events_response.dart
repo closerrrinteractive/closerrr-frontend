@@ -100,6 +100,22 @@ class Events {
         "updatedAt": updatedAt.toIso8601String(),
         "User": user!.toJson(),
       };
+
+  String getEventPoster(String? currentUserProfilePic) {
+    final bool hasNoImage = image == null || 
+                            image!.isEmpty || 
+                            image == ApiStrings.imageUrl || 
+                            image == ApiStrings.baseUrl ||
+                            image!.endsWith('amazonaws.com/') ||
+                            image!.endsWith('amazonaws.com');
+    if (hasNoImage) {
+      final String? profilePic = user?.profile.profilePic ?? currentUserProfilePic;
+      if (profilePic != null && profilePic.isNotEmpty) {
+        return profilePic.startsWith('http') ? profilePic : ApiStrings.imageUrl + profilePic;
+      }
+    }
+    return image ?? '';
+  }
 }
 
 class User {

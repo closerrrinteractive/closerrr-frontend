@@ -8,7 +8,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:dartz/dartz.dart';
 
+import '../../../core/config/haptic_helper.dart';
 import '../../../core/services/socket_services.dart';
 import '../../models/chat/chat_memories.dart';
 import '../../models/chat/chat_messages_model.dart';
@@ -97,15 +99,6 @@ class ChatController extends GetxController {
       (failure) => kLog('Failure in Chats :: $failure', error: true),
       (success) {
         chatCount.value = success.data.count;
-        success.data.rows.sort((a, b) {
-          if (a.isFavourite != null && b.isFavourite != null) {
-            if (a.isFavourite!.value == b.isFavourite!.value) {
-              return 0;
-            }
-          }
-          return b.isFavourite!.value ? 1 : -1;
-        });
-
         chats.assignAll(success.data.rows);
       },
     );
@@ -504,5 +497,106 @@ class ChatController extends GetxController {
       },
     );
     return success;
+  }
+
+  Future<List<Map<String, dynamic>>> uploadFiles(XFile file, String type) async {
+    final result = await chatServices.getPresignedUrls(file, type);
+    return result.fold(
+      (failure) {
+        kLog("Failed to get presigned URL: $failure", error: true);
+        throw Exception("Failed to upload: $failure");
+      },
+      (success) async {
+        final data = success["data"];
+        final url = data["url"];
+        final headers = data["headers"];
+        final uploadResult = await chatServices.uploadToS3(file, url, headers);
+        return uploadResult.fold(
+          (failure) {
+            kLog("Failed to upload to S3: $failure", error: true);
+            throw Exception("Failed to upload to S3: $failure");
+          },
+          (s3Success) {
+            return [
+              {
+                "data": {
+                  "key": data["key"],
+                }
+              }
+            ];
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> downloadMedia({
+    required String mediaUrl,
+    bool isMedia = false,
+  }) async {
+    if (isMedia) {
+      mediaProgressNotifier.value = 0.0;
+      isMediaDownloading.value = true;
+      isMediaDownloaded.value = false;
+      isMediaDownloadFailed.value = false;
+    } else {
+      progressNotifier.value = 0.0;
+      isDownloading.value = true;
+      isDownloaded.value = false;
+      isDownloadFailed.value = false;
+    }
+
+    final response = await chatServices.downloadMedia(
+      mediaUrl: mediaUrl,
+      progressNotifier: isMedia ? mediaProgressNotifier : progressNotifier,
+    );
+
+    await response.fold(
+      (failure) async {
+        if (isMedia) {
+          isMediaDownloading.value = false;
+          isMediaDownloadFailed.value = true;
+        } else {
+          isDownloading.value = false;
+          isDownloadFailed.value = true;
+        }
+        kLog("Download failed: $failure", error: true);
+      },
+      (success) async {
+        if (isMedia) {
+          mediaProgressNotifier.value = 1.0;
+          await Future.delayed(const Duration(milliseconds: 800)); // Let the bar animate to 100%
+          isMediaDownloading.value = false;
+          isMediaDownloaded.value = true;
+          HapticHelper.trigger(type: HapticFeedbackType.medium);
+        } else {
+          progressNotifier.value = 1.0;
+          await Future.delayed(const Duration(milliseconds: 800)); // Let the bar animate to 100%
+          isDownloading.value = false;
+          isDownloaded.value = true;
+          HapticHelper.trigger(type: HapticFeedbackType.medium);
+        }
+      },
+    );
+  }
+
+  Future<bool> deleteStory({
+    required int storyId,
+    required int chatId,
+  }) async {
+    final response = await chatServices.deleteStory(storyId: storyId);
+    return response.fold(
+      (failure) {
+        kLog("Failed to delete story: $failure", error: true);
+        return false;
+      },
+      (success) {
+        try {
+          final chat = chats.firstWhere((e) => e.id == chatId);
+          chat.storyCount.value = (chat.storyCount.value - 1).clamp(0, 999);
+        } catch (_) {}
+        return true;
+      },
+    );
   }
 }

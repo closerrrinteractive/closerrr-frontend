@@ -165,7 +165,11 @@ class AuthController extends GetxController {
             {"id": response.data["data"]["user_id"]},
           );
           await Future.delayed(const Duration(seconds: 2));
-          return RouterController.current.push('/verify-otp/email/signin');
+          return RouterController.current.push(
+            isMobile
+                ? '/verify-otp/mobile/signin'
+                : '/verify-otp/email/signin',
+          );
         }
 
         CustomSnackbar.show(

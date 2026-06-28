@@ -4,11 +4,12 @@ import 'package:closerrr/core/utils/img_string.dart';
 import 'package:closerrr/src/controller/chat/chat_controller.dart';
 import 'package:closerrr/src/controller/user_information/user_info_controller.dart';
 import 'package:closerrr/src/models/chat/chat_model.dart';
-import 'package:closerrr/src/view/widgets/specific_widgets/chat/chat_app_bar.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sizer/sizer.dart';
+import 'package:closerrr/src/controller/routing/routing_controller.dart';
 
 import '../../../../../core/themes/colors.dart';
 import '../../../../../core/themes/text_style.dart';
@@ -48,9 +49,68 @@ class _ChatSettingState extends State<ChatSetting> {
   Widget build(BuildContext context) {
     final widthScale = MediaQuery.of(context).size.width / kDesignWidth;
     return Scaffold(
-      appBar: ChatAppBar(
-        isChatSetting: true,
-        chatTitle: 'Chat Setting',
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: BoxDecoration(
+            color: whiteColor,
+            boxShadow: [
+              BoxShadow(
+                color: blueBack.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => RouterController.current.pop(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: whiteColor,
+                            boxShadow: [
+                              BoxShadow(
+                                color: blackColor.withOpacity(0.08),
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: SvgPicture.asset(
+                            backSvgIcon,
+                            width: 40,
+                            height: 40,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Chat Settings',
+                          style: TextStyle(
+                            fontFamily: 'Hellix',
+                            color: primaryColor,
+                            fontWeight: FontWeight.w700,
+                            fontSize: (widthScale * kTextFormFactor) * 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
       body: Obx(() {
         final chatIndex = chatController.chats.indexWhere((c) => c.id == (widget.chat?.id ?? widget.chatId));
@@ -81,11 +141,15 @@ class _ChatSettingState extends State<ChatSetting> {
               ),
               SizedBox(height: 1.h),
               Text(
-                currentChatUser?.friendName?.value ??
-                    chat?.groupName?.value ??
-                    widget.profile?.fullname ??
-                    widget.profile?.username ??
-                    '',
+                (currentChatUser?.friendName?.value != null &&
+                        currentChatUser!.friendName!.value.isNotEmpty)
+                    ? currentChatUser.friendName!.value
+                    : (chat?.groupName?.value != null &&
+                            chat!.groupName!.value.isNotEmpty)
+                        ? chat.groupName!.value
+                        : widget.profile?.fullname ??
+                            widget.profile?.username ??
+                            '',
                 style: CustomTextStyle.styledTextWidget.bodyLarge?.copyWith(
                   color: primaryColor,
                   fontWeight: FontWeight.bold,
@@ -170,7 +234,9 @@ class _ChatSettingState extends State<ChatSetting> {
         break;
 
       case 3:
-        context.pushNamed('chat_notifications');
+        context.pushNamed('chat_notifications', extra: {
+          'influencerId': widget.friendId,
+        });
         break;
     }
   }

@@ -2,9 +2,9 @@ import 'dart:typed_data';
 
 import 'package:closerrr/core/config/helpers.dart';
 import 'package:closerrr/core/utils/api_string.dart';
+import 'package:closerrr/src/controller/routing/routing_controller.dart';
 import 'package:closerrr/src/models/chat/chat_media_model.dart';
 import 'package:closerrr/src/view/widgets/custom_widgets/custom_square_shimmer.dart';
-import 'package:closerrr/src/view/widgets/specific_widgets/chat/chat_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -91,7 +91,69 @@ class _ChatMediaScreenState extends State<ChatMediaScreen> {
   Widget build(BuildContext context) {
     final widthScale = MediaQuery.of(context).size.width / kDesignWidth;
     return Scaffold(
-      appBar: ChatAppBar(isMediaScreen: true),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: BoxDecoration(
+            color: whiteColor,
+            boxShadow: [
+              BoxShadow(
+                color: blueBack.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => RouterController.current.pop(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: whiteColor,
+                            boxShadow: [
+                              BoxShadow(
+                                color: blackColor.withOpacity(0.08),
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: SvgPicture.asset(
+                            backSvgIcon,
+                            width: 40,
+                            height: 40,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'All Media',
+                          style: TextStyle(
+                            fontFamily: 'Hellix',
+                            color: primaryColor,
+                            fontWeight: FontWeight.w700,
+                            fontSize: (widthScale * kTextFormFactor) * 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: SingleChildScrollView(

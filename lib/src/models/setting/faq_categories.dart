@@ -49,7 +49,7 @@ class Data {
 class FAQCategory {
   int id;
   String name;
-  String description;
+  String? description;
   int displayOrder;
   bool isActive;
   DateTime rowCreatedAt;

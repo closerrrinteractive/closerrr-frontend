@@ -21,6 +21,7 @@ class MediaPopup extends StatefulWidget {
   final int id;
   final int? chatId;
   final ChatRowData? chat;
+  final bool simulateError;
 
   const MediaPopup({
     super.key,
@@ -29,6 +30,7 @@ class MediaPopup extends StatefulWidget {
     this.chat,
     required this.id,
     required this.mediaDownloadTitle,
+    this.simulateError = false,
   });
 
   @override
@@ -57,34 +59,118 @@ class _MediaPopupState extends State<MediaPopup> {
     return AlertDialog(
       backgroundColor: transparentColor,
       contentPadding: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       content: Obx(
-        () => chatController.isMediaDownloading.value ||
-                chatController.isMediaDownloaded.value
-            ? _buildDownloading(widthScale)
-            : _buildActions(widthScale),
+        () {
+          if (chatController.isMediaDownloading.value) {
+            return _buildDownloadingProgressUI(widthScale);
+          } else if (chatController.isMediaDownloaded.value) {
+            return _buildDownloadCompleteUI();
+          } else if (chatController.isMediaDownloadFailed.value) {
+            return _buildDownloadErrorUI();
+          } else {
+            return _buildActions(widthScale);
+          }
+        },
       ),
     );
   }
 
-  /// 📥 Downloading UI
-  Widget _buildDownloading(double widthScale) {
-    return Obx(
-      () => SizedBox(
-        height: chatController.isMediaDownloaded.value ? 26.h : 22.h,
-        child: Stack(
-          alignment: Alignment.topCenter,
-          children: [
-            if (chatController.isMediaDownloaded.value)
-              _buildDownloadCompleteUI()
-            else
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset('assets/images/main-closer.png', height: 80),
-                  _buildProgressBar(widthScale),
-                ],
+  Widget _buildCardWrapper({required Widget child, bool showLogo = true}) {
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.topCenter,
+      children: [
+        Container(
+          width: 100.w,
+          margin: const EdgeInsets.only(top: 40),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            color: popColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.12),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
               ),
+            ],
+          ),
+          child: child,
+        ),
+        if (showLogo)
+          Positioned(
+            top: 0,
+            child: Image.asset(
+              'assets/images/main-closer.png',
+              height: 80,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDownloadingProgressUI(double widthScale) {
+    return _buildCardWrapper(
+      showLogo: true,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 42, left: 24, right: 24, bottom: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Downloading...',
+              style: CustomTextStyle.styledTextWidget.titleSmall?.copyWith(
+                color: headingColor,
+                fontSize: (widthScale * kTextFormFactor) * 16,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ValueListenableBuilder<double>(
+              valueListenable: chatController.mediaProgressNotifier,
+              builder: (context, value, _) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(100),
+                    child: TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeInOut,
+                      tween: Tween<double>(begin: 0.0, end: value),
+                      builder: (context, animatedValue, _) {
+                        return LinearProgressIndicator(
+                          minHeight: 12,
+                          value: animatedValue,
+                          backgroundColor: headingColor.withOpacity(0.15),
+                          valueColor: const AlwaysStoppedAnimation<Color>(headingColor),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            ValueListenableBuilder<double>(
+              valueListenable: chatController.mediaProgressNotifier,
+              builder: (context, value, _) {
+                return TweenAnimationBuilder<double>(
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                  tween: Tween<double>(begin: 0.0, end: value),
+                  builder: (context, animatedValue, _) {
+                    return Text(
+                      '${(animatedValue * 100).floor()}%',
+                      style: CustomTextStyle.styledTextWidget.titleSmall?.copyWith(
+                        color: headingColor,
+                        fontSize: (widthScale * kTextFormFactor) * 14,
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -92,114 +178,140 @@ class _MediaPopupState extends State<MediaPopup> {
   }
 
   Widget _buildDownloadCompleteUI() {
-    return Container(
-      width: 100.w,
-      padding: const EdgeInsets.all(24),
-      margin: EdgeInsets.only(top: 4.h),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        color: popColor,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SvgPicture.asset('assets/svg/message_sent_icon.svg', height: 64),
-          SizedBox(height: 2.h),
-          PopupCustomBtn(
-            title: 'Download Complete',
-            isCenterTitle: true,
-            ontap: () => Navigator.pop(context),
-          ),
-        ],
+    final widthScale = MediaQuery.of(context).size.width / kDesignWidth;
+    return _buildCardWrapper(
+      showLogo: false,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 20, left: 24, right: 24, bottom: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(
+              completeSvgIcon,
+              height: 72,
+              width: 72,
+            ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: () {
+                chatController.isMediaDownloaded.value = false;
+                Navigator.pop(context);
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: headingColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    'Download Complete',
+                    style: CustomTextStyle.styledTextWidget.titleSmall?.copyWith(
+                      color: headingColor,
+                      fontSize: (widthScale * kTextFormFactor) * 16,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildProgressBar(double widthScale) {
-    return ValueListenableBuilder<double>(
-      valueListenable: chatController.mediaProgressNotifier,
-      builder: (context, value, _) {
-        return Container(
-          width: 100.w,
-          padding: const EdgeInsets.all(24),
-          margin: EdgeInsets.only(top: 4.h),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            color: popColor,
-          ),
+  Widget _buildDownloadErrorUI() {
+    return GestureDetector(
+      onTap: () {
+        chatController.isMediaDownloadFailed.value = false;
+        Navigator.pop(context);
+      },
+      child: _buildCardWrapper(
+        showLogo: true,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 42, left: 24, right: 24, bottom: 16),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Downloading...',
-                style: CustomTextStyle.styledTextWidget.titleMedium?.copyWith(
-                  color: primaryColor,
+                'Sorry!',
+                style: TextStyle(
+                  fontFamily: 'Hellix',
+                  color: headingColor,
                   fontWeight: FontWeight.bold,
+                  fontSize: 26,
                 ),
               ),
-              SizedBox(height: 1.h),
-              LinearProgressIndicator(
-                minHeight: 8,
-                borderRadius: BorderRadius.circular(12),
-                value: value,
-                backgroundColor: headingColor.withOpacity(0.1),
-                color: headingColor,
-              ),
-              SizedBox(height: 1.h),
+              const SizedBox(height: 6),
               Text(
-                '${(value * 100).floor()}%',
-                style: CustomTextStyle.styledTextWidget.labelMedium?.copyWith(
-                  color: primaryColor,
+                'Network Error!',
+                style: TextStyle(
+                  fontFamily: 'Hellix',
+                  color: const Color(0xFFFF3B30),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'The Picture Could Not Be Downloaded.\nPlease Check Your Internet Connection\nAnd Try Again.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Hellix',
+                  color: headingColor,
+                  height: 1.4,
+                  fontSize: 15,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
   /// ⚡ Actions UI
   Widget _buildActions(double widthScale) {
-    return Container(
-      width: 100.w,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        color: popColor,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Actions',
-            style: CustomTextStyle.styledTextWidget.titleMedium?.copyWith(
-              color: primaryColor,
-              fontWeight: FontWeight.bold,
-              fontSize: (widthScale * kTextFormFactor) * 20,
+    return _buildCardWrapper(
+      showLogo: false,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 20, left: 24, right: 24, bottom: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Actions',
+              style: CustomTextStyle.styledTextWidget.titleMedium?.copyWith(
+                color: primaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: (widthScale * kTextFormFactor) * 20,
+              ),
             ),
-          ),
-          SizedBox(height: 2.h),
-          if (widget.chatId != null &&
-              widget.chatId != 0 &&
-              widget.id == 0 &&
-              userInformationController.isInfluencer.value) ...[
+            SizedBox(height: 1.5.h),
+            if (widget.chatId != null &&
+                widget.chatId != 0 &&
+                widget.id == 0 &&
+                userInformationController.isInfluencer.value) ...[
+              PopupCustomBtn(
+                isActions: true,
+                title: 'Change Picture',
+                ontap: _openImagePicker,
+                icon: Icons.photo_camera_back_rounded,
+              ),
+              SizedBox(height: 1.h),
+            ],
             PopupCustomBtn(
               isActions: true,
-              title: 'Change Picture',
-              ontap: _openImagePicker,
-              icon: Icons.photo_camera_back_rounded,
+              title:
+                  'Download ${widget.mediaDownloadTitle == 'Image' ? 'Picture' : widget.mediaDownloadTitle}',
+              ontap: _startDownload,
+              icon: Icons.file_download_rounded,
             ),
-            SizedBox(height: 1.h),
           ],
-          PopupCustomBtn(
-            isActions: true,
-            title:
-                'Download ${widget.mediaDownloadTitle == 'Image' ? 'Picture' : widget.mediaDownloadTitle}',
-            ontap: _startDownload,
-            icon: Icons.file_download_rounded,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -319,12 +431,31 @@ class _MediaPopupState extends State<MediaPopup> {
 
   /// 📥 Start download
   Future<void> _startDownload() async {
+    if (widget.simulateError) {
+      chatController.isMediaDownloading.value = true;
+      chatController.mediaProgressNotifier.value = 0.0;
+      await Future.delayed(const Duration(milliseconds: 400));
+      chatController.mediaProgressNotifier.value = 0.35;
+      await Future.delayed(const Duration(milliseconds: 500));
+      chatController.isMediaDownloading.value = false;
+      chatController.isMediaDownloadFailed.value = true;
+      return;
+    }
+
     if (widget.media == null) return;
     chatController.isMediaDownloading.value = true;
+    
+    String mediaUrl = widget.media!;
+    if (!mediaUrl.contains('http')) {
+      if (mediaUrl.contains('uploads/')) {
+        mediaUrl = ApiStrings.s3ImageUrl + mediaUrl;
+      } else {
+        mediaUrl = ApiStrings.imageUrl + mediaUrl;
+      }
+    }
+    
     await chatController.downloadMedia(
-      mediaUrl: widget.media!.contains('https')
-          ? widget.media!
-          : ApiStrings.s3ImageUrl + widget.media!,
+      mediaUrl: mediaUrl,
       isMedia: true,
     );
   }

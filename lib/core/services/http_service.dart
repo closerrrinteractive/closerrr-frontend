@@ -209,13 +209,31 @@ class HttpService {
   dynamic _handleError(error) {
     print("Hey debuggggggg error");
     print(error);
-    String message =
-        error.response.data['error_message'] ?? "Something went wrong";
+
+    // Safely get the message — error.response is NULL when backend is unreachable
+    String message = "Something went wrong";
+    try {
+      if (error?.response?.data != null) {
+        message = error.response.data['error_message'] ??
+            error.response.data['message'] ??
+            "Something went wrong";
+      } else if (error is DioException &&
+          (error.type == DioExceptionType.connectionError ||
+              error.type == DioExceptionType.connectionTimeout ||
+              error.type == DioExceptionType.receiveTimeout ||
+              error.type == DioExceptionType.sendTimeout ||
+              error.type == DioExceptionType.unknown)) {
+        message = "Server not reachable. Please try again.";
+      }
+    } catch (_) {
+      message = "Something went wrong";
+    }
+
     if (message == "username must be unique") {
       message = "Username already taken.";
     }
+
     CustomSnackbar.show(title: '', message: message);
-    // return error.response;
     throw Exception(message);
   }
 

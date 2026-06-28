@@ -49,20 +49,64 @@ class _ChatProfileState extends State<ChatProfile> {
   final settingController = Get.find<SettingScreenController>();
   final isEdit = false.obs;
   final _descriptionController = TextEditingController();
-  late final ChatRowData chat;
+  late ChatRowData chat;
+  bool _chatResolved = false;
+  bool _chatMissing = false;
 
   @override
   void initState() {
     super.initState();
-    chat = chatController.chats.firstWhere((c) => c.id == widget.chatId);
+    _resolveChat();
     _descriptionController.text = widget.chat?.groupDescription != null &&
             (widget.chat?.groupDescription ?? '').isNotEmpty
         ? widget.chat?.groupDescription ?? ''
         : Constants.bio;
   }
 
+  Future<void> _resolveChat() async {
+    ChatRowData? resolved =
+        widget.chat ?? chatController.chats.firstWhereOrNull(
+              (c) => c.id == widget.chatId,
+            );
+    if (resolved == null) {
+      await chatController.getChats(page: 1);
+      resolved = chatController.chats.firstWhereOrNull(
+        (c) => c.id == widget.chatId,
+      );
+    }
+    if (mounted) {
+      setState(() {
+        if (resolved != null) {
+          chat = resolved;
+          _chatMissing = false;
+        } else {
+          _chatMissing = true;
+        }
+        _chatResolved = true;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (!_chatResolved) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: primaryColor),
+        ),
+      );
+    }
+    if (_chatMissing) {
+      return Scaffold(
+        body: Center(
+          child: Text(
+            'Could not load chat profile',
+            style: CustomTextStyle.styledTextWidget.bodyMedium,
+          ),
+        ),
+      );
+    }
+
     final widthScale = MediaQuery.of(context).size.width / kDesignWidth;
     widget.profile.username = widget.profile.fullname;
 
@@ -113,7 +157,7 @@ class _ChatProfileState extends State<ChatProfile> {
                     }),
                   ),
                   _ProfileOption(
-                    icon: 'notification',
+                    icon: 'notificationbell',
                     title: 'Notifications',
                     onTap: () =>
                         context.pushNamed('chat_message_notifications', extra: {
@@ -289,16 +333,18 @@ class _ChatProfileState extends State<ChatProfile> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Obx(() {
-                              chat.groupName?.value;
+                              final friendNameVal = widget.chatUser?.friendName?.value;
+                              final groupNameVal = chat.groupName?.value;
                               return Text(
                                 uiController.isInfluencer.value
-                                    ? chat.groupName?.value ??
-                                        widget.profile.username ??
-                                        ''
-                                    : (widget.chatUser?.friendName?.value ??
-                                        chat.groupName?.value ??
-                                        widget.profile.username ??
-                                        ''),
+                                    ? (groupNameVal != null && groupNameVal.isNotEmpty
+                                        ? groupNameVal
+                                        : widget.profile.fullname ?? widget.profile.username ?? '')
+                                    : (friendNameVal != null && friendNameVal.isNotEmpty)
+                                        ? friendNameVal
+                                        : (groupNameVal != null && groupNameVal.isNotEmpty)
+                                            ? groupNameVal
+                                            : widget.profile.fullname ?? widget.profile.username ?? '',
                                 style: CustomTextStyle
                                     .styledTextWidget.bodyLarge!
                                     .copyWith(

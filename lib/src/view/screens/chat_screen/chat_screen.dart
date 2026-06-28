@@ -4,17 +4,19 @@ import 'dart:convert';
 import 'package:closerrr/core/services/socket_services.dart';
 import 'package:closerrr/core/utils/img_string.dart';
 import 'package:closerrr/src/controller/chat/chat_controller.dart';
+import 'package:closerrr/src/controller/routing/routing_controller.dart';
 import 'package:closerrr/src/controller/live/live_controller.dart';
 import 'package:closerrr/src/controller/user_information/user_info_controller.dart';
 import 'package:closerrr/src/models/chat/chat_model.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../../../core/config/helpers.dart';
+import '../../../../core/config/haptic_helper.dart';
 import '../../../../core/themes/colors.dart';
+import '../../../../core/utils/debug_log.dart';
 import '../../../../core/themes/text_style.dart';
 import '../../popup/chat/chat_tile_hold.dart';
 import '../../widgets/custom_widgets/custom_chat_tile.dart';
@@ -31,12 +33,15 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  static const bool forceEmptyChats = false;
+
   final CoreSocketServices socketService = Get.find();
   RxString selectedOption = 'Favorite Chats'.obs;
   ChatController chatController = Get.find();
   UserInformationController userInformationController = Get.find();
   ScrollController scrollController = ScrollController();
   LiveController liveController = Get.find();
+  final RxString selectedCategory = 'All'.obs;
 
   @override
   void initState() {
@@ -147,21 +152,7 @@ class _ChatScreenState extends State<ChatScreen> {
     listenForNewStream();
   }
 
-  void sortAllChatsByFavorite() {
-    // Make a copy of the list
-    final sortedChats = List.of(chatController.chats);
 
-    sortedChats.sort((a, b) {
-      final aFav = a.isFavourite?.value ?? false;
-      final bFav = b.isFavourite?.value ?? false;
-
-      if (aFav == bFav) return 0;
-      return aFav ? -1 : 1; // favorites first
-    });
-
-    // Reassign safely → not the same reference
-    chatController.chats.assignAll(sortedChats);
-  }
 
   Timer? debounce;
   FocusNode searchFocusNode = FocusNode();
@@ -173,6 +164,7 @@ class _ChatScreenState extends State<ChatScreen> {
           isEvents: false,
           icon: 'assets/svg/chat_icon.svg',
           title: 'Chats',
+          searchHint: 'Search Chats',
           gif: chatHeartGif,
           searchController: chatController.searchChatController,
           onClose: () {
@@ -190,42 +182,89 @@ class _ChatScreenState extends State<ChatScreen> {
             });
           }),
       backgroundColor: whiteColor,
-      body: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 24),
-        padding: EdgeInsets.only(top: 1.h),
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.w),
         child: Column(
           children: [
-            if (chatController.chats.value.isNotEmpty)
-              Row(
-                children: [
-                  SvgPicture.asset(
-                    favoriteChats,
-                    color: headingColor,
-                    height: 2.h,
-                  ),
-                  SizedBox(width: 2.w),
-                  Text(
-                    "All Chats",
-                    style: CustomTextStyle.styledTextWidget.labelMedium!
-                        .copyWith(color: headingColor, fontSize: 15.sp),
-                  ),
-                ],
-              ),
-            SizedBox(height: 2.5.h),
             Obx(() {
+              if (chatController.isSearching.value) {
+                return const SizedBox.shrink();
+              }
+              final sequence = ['All', 'Favorites'];
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: sequence.map((cat) {
+                          final isSelected = selectedCategory.value == cat;
+                          return GestureDetector(
+                            onTap: () {
+                              HapticHelper.trigger(type: HapticFeedbackType.light);
+                              selectedCategory.value = cat;
+                            },
+                            child: Container(
+                              margin: EdgeInsets.only(right: 3.w),
+                              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 0.7.h),
+                              decoration: BoxDecoration(
+                                color: isSelected ? primaryColor : primaryColor.withOpacity(0.06),
+                                borderRadius: BorderRadius.circular(20.sp),
+                                border: Border.all(
+                                  color: isSelected ? primaryColor : Colors.transparent,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                cat,
+                                style: CustomTextStyle.styledTextWidget.labelMedium!.copyWith(
+                                  color: isSelected ? whiteColor : primaryColor,
+                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                  fontSize: 10.sp,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                ],
+              );
+            }),
+            Obx(() {
+              final allChats = forceEmptyChats ? <ChatRowData>[] : chatController.chats.value;
+              var chatsToShow = allChats;
+              if (selectedCategory.value == 'Favorites') {
+                chatsToShow = chatsToShow.where((chat) => chat.isFavourite?.value == true).toList();
+              }
+
+              if (chatsToShow.isEmpty) {
+                final bool isFavoritesEmptyStateWithChats = selectedCategory.value == 'Favorites' && allChats.isNotEmpty;
+                return Expanded(
+                  child: CustomNoChat(
+                    isChat: !isFavoritesEmptyStateWithChats,
+                    title: isFavoritesEmptyStateWithChats
+                        ? 'No Favorites Found!'
+                        : 'It’s no fun to be alone!',
+                    subtitle: isFavoritesEmptyStateWithChats
+                        ? ''
+                        : 'Make Friends Here- ',
+                    navigationShell: widget.navigationShell,
+                  ),
+                );
+              }
+
               return Expanded(
-                child: chatController.chatCount.value == 0
-                    ? CustomNoChat(
-                        isChat: true,
-                        title: 'It’s no fun to be alone!',
-                        subtitle: 'Make Friends Here-',
-                        navigationShell: widget.navigationShell,
-                      )
-                    : ListView.builder(
-                        controller: scrollController,
-                        itemCount: chatController.chats.value.length,
-                        itemBuilder: (context, index) {
-                          final chat = chatController.chats.value;
+                child: ListView.builder(
+                  controller: scrollController,
+                  itemCount: chatsToShow.length,
+                  itemBuilder: (context, index) {
+                    final chat = chatsToShow;
                           return ChatTile(
                             key: ValueKey(chat[index].id),
                             chat: chat[index],
@@ -250,39 +289,71 @@ class _ChatScreenState extends State<ChatScreen> {
                                 chat[index].unreadCount.value = 0;
                               });
                             },
-                            onHold: () => showDialog(
-                              context: context,
-                              builder: (context) {
-                                final admin = Helpers.getAdmin(
-                                  users: chat[index].users,
-                                );
-                                return ChatTileHold(
-                                  chatId: chat[index].id,
-                                  index: index,
-                                  onTapChangeIsFavorite: () async {
-                                    chatController.chats[index].isFavourite!
-                                        .value = !(chatController
-                                            .chats[index].isFavourite?.value ??
-                                        false);
+                            onHold: () {
+                              HapticHelper.trigger(type: HapticFeedbackType.medium);
+                              final admin = Helpers.getAdmin(
+                                users: chat[index].users,
+                              );
+                              final currentUserId = userInformationController.userData["id"]?.toString();
+                              final loggedInUser = currentUserId != null
+                                  ? Helpers.getUser(
+                                      users: chat[index].users,
+                                      userId: currentUserId,
+                                    )
+                                  : null;
+                              // #region agent log
+                              DebugLog.write(
+                                location: 'chat_screen.dart:onHold',
+                                message: 'opening chat hold dialog',
+                                hypothesisId: 'A',
+                                data: {
+                                  'chatId': chat[index].id,
+                                  'adminFound': admin != null,
+                                  'adminName': admin?.profile?.fullname ??
+                                      admin?.profile?.username,
+                                },
+                              );
+                              // #endregion
+                              final rootContext = Get.find<RouterController>()
+                                      .rootNavigatorKey
+                                      .currentContext ??
+                                  context;
+                              showDialog(
+                                context: rootContext,
+                                barrierDismissible: true,
+                                builder: (dialogContext) {
+                                  return ChatTileHold(
+                                    chatId: chat[index].id,
+                                    index: index,
+                                    onTapChangeIsFavorite: () async {
+                                      chatController.chats[index].isFavourite!
+                                          .value = !(chatController
+                                              .chats[index].isFavourite?.value ??
+                                          false);
 
-                                    await chatController
-                                        .addAndRemoveFavouriteChat(
-                                      chatId: chat[index].id,
-                                    );
-
-                                    sortAllChatsByFavorite();
-                                  },
-                                  secondaryText:
-                                      chat[index].isFavourite!.value == true
-                                          ? 'Remove Chat as Favorite'
-                                          : 'Mark Chat as Favorite',
-                                  text: admin.profile?.fullname ??
-                                      admin.profile?.username ??
-                                      '',
-                                  chat: chat[index],
-                                );
-                              },
-                            ),
+                                      await chatController
+                                          .addAndRemoveFavouriteChat(
+                                        chatId: chat[index].id,
+                                      );
+                                    },
+                                    secondaryText:
+                                        chat[index].isFavourite!.value == true
+                                            ? 'Remove Chat as Favorite'
+                                            : 'Mark Chat as Favorite',
+                                    text: (loggedInUser?.chatUser.friendName?.value != null &&
+                                            loggedInUser!.chatUser.friendName!.value.isNotEmpty)
+                                        ? loggedInUser.chatUser.friendName!.value
+                                        : (chat[index].groupName?.value != null &&
+                                                chat[index].groupName!.value.isNotEmpty)
+                                            ? chat[index].groupName!.value
+                                            : admin?.profile?.fullname ??
+                                                admin?.profile?.username ??
+                                                'Chat Options',
+                                    chat: chat[index],
+                                  );
+                                },
+                              );
+                            },
                           );
                         },
                       ),

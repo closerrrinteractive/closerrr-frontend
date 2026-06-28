@@ -86,7 +86,7 @@ class _AllFriendEventsScreenState extends State<AllFriendEventsScreen> {
                   } else ...{
                     ListView.builder(
                       shrinkWrap: true,
-                      padding: EdgeInsets.all(2.h),
+                      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: eventController.allFriends.length,
                       itemBuilder: (context, index) {

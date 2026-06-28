@@ -139,9 +139,14 @@ class SettingServices {
   }
 
   /// [FAQData]
-  Future<Either<Failure, FaqCategories>> getFaqCategories() async {
+  Future<Either<Failure, FaqCategories>> getFaqCategories({String? audience}) async {
     try {
-      final response = await httpService.get(ApiStrings.getFaqCategories);
+      final response = await httpService.get(
+        ApiStrings.getFaqCategories,
+        queryParameters: {
+          if (audience != null) 'audience': audience,
+        },
+      );
       return Right(FaqCategories.fromJson(response.data));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
@@ -149,12 +154,16 @@ class SettingServices {
   }
 
   Future<Either<Failure, FaQs>> getFaq({
-    required int categoryId,
+    int? categoryId,
+    String? search,
+    String? audience,
   }) async {
     try {
       final response =
           await httpService.get(ApiStrings.getFaq, queryParameters: {
-        'category_id': categoryId,
+        if (categoryId != null) 'category_id': categoryId,
+        if (search != null && search.isNotEmpty) 'search': search,
+        if (audience != null) 'audience': audience,
       });
       return Right(FaQs.fromJson(response.data));
     } catch (e) {

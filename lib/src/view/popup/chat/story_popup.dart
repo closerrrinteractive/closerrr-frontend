@@ -13,6 +13,7 @@ import 'package:sizer/sizer.dart';
 import '../../../../core/themes/colors.dart';
 import '../../../../core/themes/text_style.dart';
 import '../../../../core/utils/api_string.dart';
+import '../../../../core/utils/constant.dart';
 
 class StoryPopup extends StatefulWidget {
   final bool? isMessageSent;
@@ -60,18 +61,27 @@ class _StoryPopupState extends State<StoryPopup> {
     return AlertDialog(
       backgroundColor: transparentColor,
       contentPadding: EdgeInsets.zero,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(24),
       ),
       content: Obx(
-        () => isReporting.value
-            ? _buildReporting()
-            : chatController.isDownloading.value ||
-                    chatController.isDownloaded.value
-                ? _buildDownloading()
-                : widget.isMessageSent ?? false
-                    ? _buildMessageSent()
-                    : _buildActions(),
+        () {
+          if (isReporting.value) {
+            return _buildReporting();
+          } else if (chatController.isDownloading.value) {
+            return _buildDownloadingProgressUI();
+          } else if (chatController.isDownloaded.value) {
+            return _buildDownloadCompleteUI();
+          } else if (chatController.isDownloadFailed.value) {
+            return _buildDownloadErrorUI();
+          } else if (widget.isMessageSent ?? false) {
+            return _buildMessageSent();
+          } else {
+            return _buildActions();
+          }
+        },
       ),
     );
   }
@@ -80,8 +90,15 @@ class _StoryPopupState extends State<StoryPopup> {
         width: 100.w,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(24),
           color: popColor,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -277,100 +294,208 @@ class _StoryPopupState extends State<StoryPopup> {
     });
   }
 
-  _buildDownloading() => Obx(() => SizedBox(
-        height: chatController.isDownloaded.value ? 26.h : 22.h,
-        child: Stack(
-          alignment: Alignment.topCenter,
+  Widget _buildCardWrapper({required Widget child, bool showLogo = true}) {
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.topCenter,
+      children: [
+        Container(
+          width: 100.w,
+          margin: const EdgeInsets.only(top: 40),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            color: popColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.12),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: child,
+        ),
+        if (showLogo)
+          Positioned(
+            top: 0,
+            child: Image.asset(
+              'assets/images/main-closer.png',
+              height: 80,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDownloadingProgressUI() {
+    final widthScale = MediaQuery.of(context).size.width / kDesignWidth;
+    return _buildCardWrapper(
+      showLogo: true,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 42, left: 24, right: 24, bottom: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            if (chatController.isDownloaded.value) ...{
-              Container(
-                width: 100.w,
-                padding: const EdgeInsets.all(24),
-                margin: EdgeInsets.only(top: 2.h),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
-                  color: popColor,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SvgPicture.asset(
-                      'assets/svg/message_sent_icon.svg',
-                      height: 76,
-                    ),
-                    SizedBox(height: 2.h),
-                    PopupCustomBtn(
-                      title: 'Download Complete',
-                      isCenterTitle: true,
-                      ontap: () {
-                        Navigator.pop(context);
+            Text(
+              'Downloading...',
+              style: CustomTextStyle.styledTextWidget.titleSmall?.copyWith(
+                color: headingColor,
+                fontSize: (widthScale * kTextFormFactor) * 16,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ValueListenableBuilder<double>(
+              valueListenable: chatController.progressNotifier,
+              builder: (context, value, _) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(100),
+                    child: TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeInOut,
+                      tween: Tween<double>(begin: 0.0, end: value),
+                      builder: (context, animatedValue, _) {
+                        return LinearProgressIndicator(
+                          minHeight: 12,
+                          value: animatedValue,
+                          backgroundColor: headingColor.withOpacity(0.15),
+                          valueColor: const AlwaysStoppedAnimation<Color>(headingColor),
+                        );
                       },
                     ),
-                  ],
-                ),
-              )
-            } else ...{
-              ValueListenableBuilder(
-                valueListenable: chatController.progressNotifier,
-                builder: (context, value, child) {
-                  return Container(
-                    width: 100.w,
-                    padding: const EdgeInsets.all(24),
-                    margin: EdgeInsets.only(top: 5.h),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(15),
-                      color: popColor,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(height: 2.h),
-                        Text(
-                          'Downloading...',
-                          style: CustomTextStyle.styledTextWidget.titleMedium
-                              ?.copyWith(
-                            color: primaryColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 1.h),
-                        LinearProgressIndicator(
-                          minHeight: 8,
-                          borderRadius: BorderRadius.circular(12),
-                          value: value,
-                          backgroundColor: headingColor.withOpacity(0.1),
-                          color: headingColor,
-                        ),
-                        SizedBox(height: 1.h),
-                        Text(
-                          '${(value * 100).floor()}%',
-                          style: CustomTextStyle.styledTextWidget.labelMedium
-                              ?.copyWith(
-                            color: primaryColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              Image.asset(
-                'assets/images/main-closer.png',
-                height: 80,
-              ),
-            }
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            ValueListenableBuilder<double>(
+              valueListenable: chatController.progressNotifier,
+              builder: (context, value, _) {
+                return TweenAnimationBuilder<double>(
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                  tween: Tween<double>(begin: 0.0, end: value),
+                  builder: (context, animatedValue, _) {
+                    return Text(
+                      '${(animatedValue * 100).floor()}%',
+                      style: CustomTextStyle.styledTextWidget.titleSmall?.copyWith(
+                        color: headingColor,
+                        fontSize: (widthScale * kTextFormFactor) * 14,
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ],
         ),
-      ));
+      ),
+    );
+  }
 
-  Container _buildActions() => Container(
-        width: 100.w,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          color: popColor,
+  Widget _buildDownloadCompleteUI() {
+    final widthScale = MediaQuery.of(context).size.width / kDesignWidth;
+    return _buildCardWrapper(
+      showLogo: false,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 20, left: 24, right: 24, bottom: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(
+              completeSvgIcon,
+              height: 72,
+              width: 72,
+            ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: () {
+                chatController.isDownloaded.value = false;
+                Navigator.pop(context);
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: headingColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    'Download Complete',
+                    style: CustomTextStyle.styledTextWidget.titleSmall?.copyWith(
+                      color: headingColor,
+                      fontSize: (widthScale * kTextFormFactor) * 16,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDownloadErrorUI() {
+    return GestureDetector(
+      onTap: () {
+        chatController.isDownloadFailed.value = false;
+        Navigator.pop(context);
+      },
+      child: _buildCardWrapper(
+        showLogo: true,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 42, left: 24, right: 24, bottom: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Sorry!',
+                style: TextStyle(
+                  fontFamily: 'Hellix',
+                  color: headingColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 26,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Network Error!',
+                style: TextStyle(
+                  fontFamily: 'Hellix',
+                  color: const Color(0xFFFF3B30),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'The Picture Could Not Be Downloaded.\nPlease Check Your Internet Connection\nAnd Try Again.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Hellix',
+                  color: headingColor,
+                  height: 1.4,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActions() {
+    final widthScale = MediaQuery.of(context).size.width / kDesignWidth;
+    return _buildCardWrapper(
+      showLogo: false,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 20, left: 24, right: 24, bottom: 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -379,17 +504,29 @@ class _StoryPopupState extends State<StoryPopup> {
               style: CustomTextStyle.styledTextWidget.titleMedium?.copyWith(
                 color: primaryColor,
                 fontWeight: FontWeight.bold,
+                fontSize: (widthScale * kTextFormFactor) * 20,
               ),
             ),
-            SizedBox(height: 2.h),
+            SizedBox(height: 1.5.h),
             PopupCustomBtn(
               isActions: true,
               title: 'Download Story',
               ontap: () async {
                 if (widget.media == null) return;
                 chatController.isDownloading.value = true;
+                chatController.progressNotifier.value = 0.0;
+                
+                String mediaUrl = widget.media!;
+                if (!mediaUrl.contains('http')) {
+                  if (mediaUrl.contains('uploads/')) {
+                    mediaUrl = ApiStrings.s3ImageUrl + mediaUrl;
+                  } else {
+                    mediaUrl = ApiStrings.imageUrl + mediaUrl;
+                  }
+                }
+                
                 await chatController.downloadMedia(
-                  mediaUrl: ApiStrings.imageUrl + widget.media!,
+                  mediaUrl: mediaUrl,
                 );
               },
               icon: Icons.file_download_rounded,
@@ -413,23 +550,23 @@ class _StoryPopupState extends State<StoryPopup> {
                               )
                                   .then((value) {
                                 if (value) {
-                                  Get.back();
-                                  if (chatController
-                                      .storyData.value.first.stories.isEmpty) {
-                                    Get.find<RouterController>().router.pop();
-                                  } else {
-                                    chatController.storyData.value.first.stories
-                                        .removeWhere(
-                                      (element) {
-                                        return element.id == widget.storyId;
-                                      },
-                                    );
-                                    chatController.storyIndex.value -= 1;
+                                    Get.back();
+                                    if (chatController
+                                        .storyData.value.first.stories.isEmpty) {
+                                      Get.find<RouterController>().router.pop();
+                                    } else {
+                                      chatController.storyData.value.first.stories
+                                          .removeWhere(
+                                        (element) {
+                                          return element.id == widget.storyId;
+                                        },
+                                      );
+                                      chatController.storyIndex.value -= 1;
 
-                                    chatController.storyData.refresh();
+                                      chatController.storyData.refresh();
+                                    }
                                   }
-                                }
-                              });
+                                });
                             },
                           ));
                 },
@@ -450,15 +587,24 @@ class _StoryPopupState extends State<StoryPopup> {
             ]
           ],
         ),
-      );
+      ),
+    );
+  }
 
   Container _buildMessageSent() {
     return Container(
       width: 100.w,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(24),
         color: popColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

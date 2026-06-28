@@ -319,13 +319,13 @@ class Helpers {
         : 0.0; // Prevent division by zero
   }
 
-  static toast(String msg, {ToastGravity? gravity}) {
+  static toast(String msg, {ToastGravity? gravity, Color? backgroundColor}) {
     FocusManager.instance.primaryFocus?.unfocus();
     return Fluttertoast.showToast(
       msg: msg,
       toastLength: Toast.LENGTH_LONG,
       gravity: gravity ?? ToastGravity.BOTTOM,
-      backgroundColor: primaryColor,
+      backgroundColor: backgroundColor ?? primaryColor,
       textColor: Colors.white,
       fontSize: 16,
     );
@@ -345,9 +345,9 @@ class Helpers {
     }
   }
 
-  static getAdmin({required List<UserData> users}) {
-    final user = users.firstWhere((element) => element.chatUser.isAdmin);
-    return user;
+  static UserData? getAdmin({required List<UserData> users}) {
+    return users.firstWhereOrNull((element) => element.chatUser.isAdmin) ??
+        (users.isNotEmpty ? users.first : null);
   }
 
   static getUser({required List<UserData> users, required String userId}) {

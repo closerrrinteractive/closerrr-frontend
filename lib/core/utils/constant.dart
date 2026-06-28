@@ -5,7 +5,7 @@ const double kDesignHeight = 760;
 const double kTextFormFactor = 1;
 
 
-final icons = ['friends', 'person', 'change_background', 'notification'];
+final icons = ['friends', 'person', 'change_background', 'notificationbell'];
 final name = [
   'Friend’s Name',
   'Your Nickname',

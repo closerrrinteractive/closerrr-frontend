@@ -1,14 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:closerrr/core/utils/api_string.dart';
 import 'package:closerrr/src/controller/explore_controllers/explore_screen_controller.dart';
-import 'package:closerrr/src/controller/user_information/user_info_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:sizer/sizer.dart';
 
 import '../../../../core/themes/colors.dart';
-import '../../../../core/themes/text_style.dart';
 import '../../../../core/utils/constant.dart';
 import '../../../../core/utils/img_string.dart';
 import '../../../controller/routing/routing_controller.dart';
@@ -20,209 +17,247 @@ class ExploreGalleryView extends StatefulWidget {
     super.key,
     required this.showcaseData,
     required this.influencer,
+    this.initialIndex = 0,
   });
 
   final RxList<ShowcaseData> showcaseData;
   final Influencer influencer;
+  final int initialIndex;
 
   @override
   State<ExploreGalleryView> createState() => _ExploreGalleryViewState();
 }
 
 class _ExploreGalleryViewState extends State<ExploreGalleryView> {
-  final selectedIndex = 0.obs;
+  final RxInt selectedIndex = 0.obs;
+  late final PageController _pageController;
   ExploreScreenController exploreScreenController = Get.find();
-  UserInformationController userInformationController = Get.find();
+
+  Profile? get profile => widget.influencer.profile;
+
+  String get displayName =>
+      (profile?.fullname?.isNotEmpty == true
+          ? profile?.fullname
+          : profile?.username) ??
+      '';
+
+  String get avatarUrl {
+    final pic = profile?.profilePic;
+    if (pic != null && pic.toString().isNotEmpty) {
+      return ApiStrings.imageUrl + pic.toString();
+    }
+    return '';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    selectedIndex.value = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final double widthScale = MediaQuery.of(context).size.width / kDesignWidth;
+    final bottomPad = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: whiteColor,
-        leading: Container(),
-        leadingWidth: 0,
-        toolbarHeight: 10.h,
-        actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 8.w),
-            child: GestureDetector(
-              onTap: () {
-                RouterController.current.pop(context);
-              },
-              child: Image(
-                height: 4.h,
-                width: 4.h,
-                image: const AssetImage(
-                  crossIcon,
+      backgroundColor: whiteColor,
+      body: SafeArea(
+        child: Obx(() {
+          final slides = widget.showcaseData;
+          if (slides.isEmpty) {
+            return const Center(
+              child: Text(
+                'No photos',
+                style: TextStyle(fontFamily: 'Hellix', color: textColor),
+              ),
+            );
+          }
+          return Column(
+            children: [
+              // ── Header: avatar + name + close ──────────────────────────
+              _buildHeader(widthScale),
+              // ── Main image (full width, expands) ───────────────────────
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: slides.length,
+                  onPageChanged: (i) => selectedIndex.value = i,
+                  itemBuilder: (context, index) {
+                    return CachedNetworkImage(
+                      imageUrl: ApiStrings.imageUrl + slides[index].path,
+                      fit: BoxFit.contain,
+                      width: double.infinity,
+                      placeholder: (_, __) => const Center(
+                        child: CircularProgressIndicator(
+                          color: primaryColor,
+                          strokeWidth: 1.5,
+                        ),
+                      ),
+                      errorWidget: (_, __, ___) => const Center(
+                        child: Icon(Icons.broken_image_outlined,
+                            color: textColor, size: 48),
+                      ),
+                    );
+                  },
                 ),
               ),
-            ),
-          )
-        ],
-        title: Row(
-          children: [
-            CachedNetworkImage(
-              imageUrl: ApiStrings.s3ImageUrl +
-                  (widget.influencer.profile?.profilePic ?? ''),
-              fit: BoxFit.cover,
-              errorWidget: (context, error, stackTrace) {
-                return const CircleAvatar(
-                  backgroundColor: whiteColor,
-                  radius: 22,
-                  child: Image(
-                    image: AssetImage(person),
-                    fit: BoxFit.cover,
-                  ),
-                );
-              },
-              placeholder: (context, url) {
-                return const Center(
-                  child: CircularProgressIndicator(
-                    color: primaryColor,
-                    strokeWidth: 1,
-                  ),
-                );
-              },
-            ),
-            SizedBox(width: 2.w),
-            Text(
-              widget.influencer.profile?.fullname ?? widget.influencer.profile?.username ?? '',
-              style: CustomTextStyle.styledTextWidget.labelMedium!.copyWith(
-                color: primaryColor,
-                fontSize: (widthScale * kTextFormFactor) * 18,
-              ),
-            ),
-          ],
-        ),
+              // ── Thumbnail strip ────────────────────────────────────────
+              _buildThumbnailStrip(slides, bottomPad),
+            ],
+          );
+        }),
       ),
-      body: Obx(() => Container(
-            height: 100.h,
-            color: whiteColor,
-            child: Column(
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: CachedNetworkImage(
-                      imageUrl: ApiStrings.s3ImageUrl +
-                          widget.showcaseData[selectedIndex.value].path,
-                      width: 100.w,
-                      fit: BoxFit.contain,
-                      placeholder: (context, url) => const Center(
+    );
+  }
+
+  // ── Header ────────────────────────────────────────────────────────────────
+
+  Widget _buildHeader(double widthScale) {
+    return Container(
+      color: whiteColor,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          // Avatar
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFEEEEEE), width: 1.5),
+            ),
+            child: ClipOval(
+              child: avatarUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: avatarUrl,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => _defaultAvatar(),
+                      placeholder: (_, __) => const Center(
                         child: CircularProgressIndicator(
                           color: primaryColor,
                           strokeWidth: 1,
                         ),
                       ),
+                    )
+                  : _defaultAvatar(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Name
+          Expanded(
+            child: Text(
+              displayName,
+              style: TextStyle(
+                fontFamily: 'Hellix',
+                color: primaryColor,
+                fontWeight: FontWeight.w800,
+                fontSize: (widthScale * kTextFormFactor) * 18,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          // Close button
+          GestureDetector(
+            onTap: () => RouterController.current.pop(context),
+            child: SvgPicture.asset(
+              icrossSvgIcon,
+              width: 32,
+              height: 32,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Thumbnail strip ───────────────────────────────────────────────────────
+
+  Widget _buildThumbnailStrip(List<ShowcaseData> slides, double bottomPad) {
+    return Container(
+      color: whiteColor,
+      width: double.infinity,
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 12,
+        bottom: 12 + bottomPad,
+      ),
+      child: Obx(() {
+        final children = List.generate(slides.length, (index) {
+          final isSelected = selectedIndex.value == index;
+          return GestureDetector(
+            onTap: () {
+              selectedIndex.value = index;
+              _pageController.animateToPage(
+                index,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.symmetric(horizontal: 5),
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSelected ? primaryColor : Colors.transparent,
+                  width: 2.5,
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: ColorFiltered(
+                  colorFilter: isSelected
+                      ? const ColorFilter.mode(
+                          Colors.transparent,
+                          BlendMode.multiply,
+                        )
+                      : ColorFilter.mode(
+                          Colors.white.withOpacity(0.45),
+                          BlendMode.lighten,
+                        ),
+                  child: CachedNetworkImage(
+                    imageUrl: ApiStrings.imageUrl + slides[index].path,
+                    fit: BoxFit.cover,
+                    width: 64,
+                    height: 64,
+                    placeholder: (_, __) => Container(
+                      color: const Color(0xFFE8E8E8),
+                    ),
+                    errorWidget: (_, __, ___) => Container(
+                      color: const Color(0xFFE8E8E8),
+                      child: const Icon(Icons.broken_image_outlined,
+                          size: 22, color: textColor),
                     ),
                   ),
                 ),
-                Container(
-                  width: 100.w,
-                  height: 30.w,
-                  padding: EdgeInsets.only(bottom: 4.w),
-                  child: ListView.builder(
-                    controller: ScrollController(),
-                    itemCount: userInformationController.isInfluencer.value
-                        ? widget.showcaseData.length + 1
-                        : widget.showcaseData.length,
-                    scrollDirection: Axis.horizontal,
-                    shrinkWrap: true,
-                    itemBuilder: (BuildContext context, int index) {
-                      return Stack(
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              if (index == widget.showcaseData.length) {
-                                return;
-                              }
-                              selectedIndex.value = index;
-                            },
-                            child: Container(
-                              height: 65,
-                              width: 65,
-                              padding: EdgeInsets.all(
-                                selectedIndex.value == index ? 0 : 5,
-                              ),
-                              margin: EdgeInsets.only(
-                                right: (userInformationController
-                                            .isInfluencer.value
-                                        ? widget.showcaseData.length != index
-                                        : widget.showcaseData.length !=
-                                            index + 1)
-                                    ? 4
-                                    : 40.w,
-                                left: index != 0 ? 4 : 40.w,
-                                bottom: 20,
-                                top: 20,
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: index == widget.showcaseData.length
-                                    ? Container(
-                                        color: primaryColor,
-                                        padding: const EdgeInsets.all(14),
-                                        child: SvgPicture.asset(
-                                          addIcon,
-                                        ),
-                                      )
-                                    : CachedNetworkImage(
-                                        imageUrl: ApiStrings.s3ImageUrl +
-                                            widget.showcaseData[index].path,
-                                        fit: BoxFit.cover,
-                                        placeholder: (context, url) =>
-                                            const Center(
-                                          child: CircularProgressIndicator(
-                                            color: primaryColor,
-                                            strokeWidth: 1,
-                                          ),
-                                        ),
-                                        colorBlendMode: BlendMode.dstOut,
-                                        color: selectedIndex.value == index
-                                            ? Colors.transparent
-                                            : Colors.white.withOpacity(0.5),
-                                      ),
-                              ),
-                            ),
-                          ),
-                          if (index != widget.showcaseData.length)
-                            Positioned(
-                              top: 16,
-                              right: 0,
-                              child: GestureDetector(
-                                onTap: () {
-                                  if (index == widget.showcaseData.length) {
-                                    return;
-                                  }
-                                  widget.showcaseData.removeAt(index);
-                                  selectedIndex.value =
-                                      index != 0 ? index - 1 : index;
-                                },
-                                child: Container(
-                                  height: 24,
-                                  width: 24,
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: primaryColor,
-                                  ),
-                                  child: SvgPicture.asset(
-                                    closeIcon,
-                                    color: whiteColor,
-                                    height: 10,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
+              ),
             ),
-          )),
+          );
+        });
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: children,
+          ),
+        );
+      }),
     );
   }
+
+  Widget _defaultAvatar() => Image.asset(person, fit: BoxFit.cover);
 }

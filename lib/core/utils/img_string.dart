@@ -30,6 +30,7 @@ const String editPngIcon = '${pngImg}edit_icon.png';
 
 // bottom nav icons
 const String exploreIcon = '${imagePath}explore_icon.png';
+const String exploreIconSvg = '${svgIcon}explore_icon.svg';
 const String chatIcon = '${imagePath}chat_icon.png';
 const String eventIcon = '${imagePath}event_icon.png';
 const String settingIcon = '${imagePath}settings_icon.png';
@@ -81,6 +82,8 @@ const String failedIcon = '${svgIcon}failed.svg';
 const String trashIcons = '${svgIcon}trash.svg';
 const String processingIcon = '${svgIcon}processing.svg';
 const String settingHeartBreak = '${svgIcon}setting_heart_break.svg';
+const String settingHeartBreakLeft = '${svgIcon}setting_heart_break_left.svg';
+const String settingHeartBreakRight = '${svgIcon}setting_heart_break_right.svg';
 const String favoriteChats = '${svgIcon}favorite.svg';
 const String dropArrowDown = '${svgIcon}drop_arrow_down.svg';
 const String selectImage = '${svgIcon}select_image.svg';
@@ -91,10 +94,20 @@ const String dashboardAnalytics = 'dashboard_analytics';
 const String myPayouts = 'my_payout';
 const String notificationSettings = 'notification_settings';
 const String faqAbout = 'faq_and_about';
+const String faqs = 'faq_and_about';
+const String about = 'about';
 const String termAndConditions = 'terms_and_conditions';
 const String privacyPolicy = 'privacy_policy';
 const String contactUs = 'contact_us';
 const String logout = 'logout';
+
+// Explore Profile
+const String backSvgIcon = '${svgIcon}back.svg';
+const String shareSvgIcon = '${svgIcon}share.svg';
+const String icrossSvgIcon = '${svgIcon}icross.svg';
+const String piccrossSvgIcon = '${svgIcon}piccross.svg';
+const String picoptionsSvgIcon = '${svgIcon}picoptions.svg';
+const String completeSvgIcon = '${svgIcon}complete.svg';
 
 // Event Screen
 const String upcomingEventIcon = '${svgIcon}upcoming_event.svg';

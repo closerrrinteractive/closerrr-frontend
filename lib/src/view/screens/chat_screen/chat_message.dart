@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:closerrr/core/config/helpers.dart';
+import 'package:closerrr/core/services/local_notification_service.dart';
 import 'package:closerrr/core/services/socket_services.dart';
 import 'package:closerrr/core/utils/api_string.dart';
+import 'package:closerrr/core/utils/debug_log.dart';
 import 'package:closerrr/src/controller/chat/chat_controller.dart'
     as LocalChatController;
 import 'package:closerrr/src/controller/user_information/user_info_controller.dart';
@@ -128,9 +130,9 @@ class _ChatMessageState extends State<ChatMessage> {
   @override
   void initState() {
     super.initState();
+    chat = widget.chat;
+    LocalNotificationService.activeChatId = widget.chat.id;
     _initialize();
-    chat = chatController.chats.value
-        .firstWhere((chat) => chat.id == widget.chat.id);
     _initChatSocket();
     messageController.addListener(() {
       messageText.value = messageController.text;
@@ -152,6 +154,20 @@ class _ChatMessageState extends State<ChatMessage> {
     loggedInUser.value =
         Helpers.getUser(users: widget.chat.users, userId: userId);
     loadAndSetCurrentChatBackground();
+    // #region agent log
+    DebugLog.write(
+      location: 'chat_message.dart:_initialize',
+      message: 'chat message initialized',
+      hypothesisId: 'B',
+      data: {
+        'chatId': widget.chat.id,
+        'adminName': chatAdmin.value?.profile?.fullname ??
+            chatAdmin.value?.profile?.username,
+        'userCount': widget.chat.users.length,
+      },
+    );
+    // #endregion
+    if (mounted) setState(() {});
   }
 
   void loadAndSetCurrentChatBackground() {
@@ -295,7 +311,7 @@ class _ChatMessageState extends State<ChatMessage> {
         metadata: {
           "author": User(
             id: messageRow.replyTo!.user.id.toString(),
-            name: messageRow.replyTo!.user.profile.username,
+            name: messageRow.replyTo!.user.profile?.username ?? 'Unknown',
           ),
         },
       );
@@ -309,15 +325,21 @@ class _ChatMessageState extends State<ChatMessage> {
     final loggedInUser = uiController.isInfluencer.value
         ? null
         : Helpers.getUser(users: user.chats.first.users, userId: userId);
+    final chatGroupName = widget.chat.groupName?.value;
 
     return User(
       id: user.id.toString(),
       name: Helpers.isInfluencer(uiController.userData['role_id'])
           ? user.profile?.username ?? 'No Name'
           : isAdmin
-              ? loggedInUser?.chatUser.friendName?.value ??
-                  groupAdmin?.profile?.username ??
-                  ''
+              ? (loggedInUser?.chatUser.friendName?.value != null &&
+                      loggedInUser!.chatUser.friendName!.value.isNotEmpty)
+                  ? loggedInUser.chatUser.friendName!.value
+                  : (chatGroupName != null && chatGroupName.isNotEmpty)
+                      ? chatGroupName
+                      : groupAdmin?.profile?.fullname ??
+                          groupAdmin?.profile?.username ??
+                          ''
               : 'Unknown',
       imageSource: '${ApiStrings.s3ImageUrl}${user.profile?.profilePic ?? ''}',
     );
@@ -326,6 +348,9 @@ class _ChatMessageState extends State<ChatMessage> {
   @override
   void dispose() {
     messageController.dispose();
+    if (LocalNotificationService.activeChatId == widget.chat.id) {
+      LocalNotificationService.activeChatId = null;
+    }
     super.dispose();
   }
 
@@ -341,7 +366,7 @@ class _ChatMessageState extends State<ChatMessage> {
             : chatAdmin.value?.profile,
         loggedInUser: loggedInUser.value?.chatUser,
         chatId: widget.chat.id,
-        chatName: (chat?.groupName),
+        chatName: chat?.groupName,
         chatIcon: chat?.groupIcon,
         isAdmin: '',
         buildMessage: () {
@@ -595,7 +620,7 @@ class _ChatMessageState extends State<ChatMessage> {
 
   Widget _buildBubble(Message message, double widthScale) {
     final msg = message.toJson();
-    final createdAt = DateFormat('hh:mm aa').format(
+    final createdAt = DateFormat('h:mm a').format(
       DateTime.fromMillisecondsSinceEpoch(msg['createdAt']),
     );
     final List<SeenBy>? seenBy = message.metadata!['seenBy'];

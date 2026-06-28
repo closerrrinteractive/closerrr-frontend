@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:closerrr/core/services/local_notification_service.dart';
 import 'package:closerrr/core/services/notification_service.dart';
 import 'package:closerrr/core/services/socket_services.dart';
+import 'package:closerrr/core/services/custom_services.dart';
 import 'package:closerrr/core/themes/colors.dart';
 import 'package:closerrr/core/themes/text_style.dart';
 import 'package:closerrr/core/utils/img_string.dart';
@@ -15,11 +17,14 @@ import 'package:closerrr/src/controller/notification/notification_controller.dar
 import 'package:closerrr/src/controller/user_information/user_info_controller.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sizer/sizer.dart';
 
 // import 'package:stream_video_flutter/stream_video_flutter.dart' as getStreamIO;
+
+import 'package:closerrr/core/config/haptic_helper.dart';
 
 import '../../../../core/utils/constant.dart';
 
@@ -60,30 +65,18 @@ class _HomeDashboardState extends State<HomeDashboard>
   }
 
   Future<void> fetchFcm() async {
-    await PushNotificationService().initNotifications();
-    String? fcmToken = await PushNotificationService.fcm.getToken();
-    await FirebaseMessaging.instance
-        .setForegroundNotificationPresentationOptions(
-            alert: true, badge: true, sound: true);
-    await notificationController.setFcmToken(fcmToken: fcmToken!);
-    // String fcmToken = await Helpers.getFcmToken();
-
-    // print("ohh acha");
-    // print(fcmToken);
-
-    // if (fcmToken.isEmpty || fcmToken == 'null') {
-    //   try {
-    //     String? fcmToken = await PushNotificationService.fcm.getToken();
-    //     await FirebaseMessaging.instance
-    //         .setForegroundNotificationPresentationOptions(
-    //             alert: true, badge: true, sound: true);
-    //     await notificationController.setFcmToken(fcmToken: fcmToken!);
-    //   } catch (e) {
-    //     print("Error fetching FCM Token: $e");
-    //   }
-    // } else {
-    //   kLog("FCM Token already exists: $fcmToken");
-    // }
+    try {
+      await PushNotificationService().initNotifications();
+      String? fcmToken = await PushNotificationService.fcm.getToken();
+      await FirebaseMessaging.instance
+          .setForegroundNotificationPresentationOptions(
+              alert: true, badge: true, sound: true);
+      if (fcmToken != null) {
+        await notificationController.setFcmToken(fcmToken: fcmToken);
+      }
+    } catch (e) {
+      kLog("Error fetching FCM token: $e");
+    }
   }
 
   initStream() {
@@ -107,74 +100,71 @@ class _HomeDashboardState extends State<HomeDashboard>
 
   @override
   Widget build(BuildContext context) {
-    final double widthScale = MediaQuery.of(context).size.width / kDesignWidth;
     return Scaffold(
+      extendBody: true,
       body: widget.navigationShell,
       bottomNavigationBar: Obx(
         () {
           final isInfluencer =
               userInformationController.userData["role_id"] == 3;
 
-          return Container(
-            decoration: BoxDecoration(
-              boxShadow: [
-                BoxShadow(
-                  color: shadowColor.withOpacity(0.15),
-                  blurRadius: 40,
-                  offset: const Offset(0, -8),
-                ),
-              ],
-            ),
-            child: BottomNavigationBar(
-              backgroundColor: whiteColor,
-              type: BottomNavigationBarType.fixed,
-              selectedLabelStyle:
-                  CustomTextStyle.styledTextWidget.headlineMedium!.copyWith(
-                      color: primaryColor,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.sp),
-              unselectedLabelStyle:
-                  CustomTextStyle.styledTextWidget.headlineMedium!
-                      .copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontSize: (widthScale * kTextFormFactor) * 14,
-                      )
-                      .copyWith(color: bottomNavColor),
-              currentIndex: navbarController.selectIndex.value,
-              selectedItemColor: primaryColor,
-              unselectedItemColor: bottomNavColor,
-              onTap: (index) {
-                widget.navigationShell.goBranch(index);
-                navbarController.selectIndex.value = index;
-                chatController.isSearching.value = false;
-              },
-              items: [
-                if (!isInfluencer)
-                  _buildNavItem(
-                    icon: exploreIcon,
-                    label: 'Explore',
-                    isSelected: navbarController.selectIndex.value == 0,
-                    isFirst: true,
+          final items = [
+            if (!isInfluencer)
+              _NavItemData(icon: exploreIcon, label: 'Explore', index: 0),
+            _NavItemData(
+                icon: chatIcon,
+                label: 'Chats',
+                index: isInfluencer ? 0 : 1),
+            _NavItemData(
+                icon: eventIcon,
+                label: 'Events',
+                index: isInfluencer ? 1 : 2),
+            _NavItemData(
+                icon: settingIcon,
+                label: 'Settings',
+                index: isInfluencer ? 2 : 3),
+          ];
+
+          return SafeArea(
+            top: false,
+            child: Container(
+              margin: const EdgeInsets.only(
+                bottom: 12.0,
+                left: 16.0,
+                right: 16.0,
+              ),
+              height: 68.0,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(32.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: shadowColor.withOpacity(0.12),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
                   ),
-                _buildNavItem(
-                  icon: chatIcon,
-                  label: 'Chats',
-                  isSelected: navbarController.selectIndex.value ==
-                      (isInfluencer ? 0 : 1),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(32.0),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 16.0, sigmaY: 16.0),
+                  child: Container(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0x1F1E1E2E)
+                        : const Color(0xD9FFFFFF),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10.0, vertical: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: items.map((item) {
+                        final isSelected =
+                            navbarController.selectIndex.value == item.index;
+                        return _buildCustomTab(item, isSelected);
+                      }).toList(),
+                    ),
+                  ),
                 ),
-                _buildNavItem(
-                  icon: eventIcon,
-                  label: 'Events',
-                  isSelected: navbarController.selectIndex.value ==
-                      (isInfluencer ? 1 : 2),
-                ),
-                _buildNavItem(
-                  icon: settingIcon,
-                  label: 'Settings',
-                  isSelected: navbarController.selectIndex.value ==
-                      (isInfluencer ? 2 : 3),
-                ),
-              ],
+              ),
             ),
           );
         },
@@ -182,32 +172,93 @@ class _HomeDashboardState extends State<HomeDashboard>
     );
   }
 
-  BottomNavigationBarItem _buildNavItem({
-    required String icon,
-    required String label,
-    required bool isSelected,
-    bool isFirst = false,
-  }) {
-    final double iconSize =
-        isFirst ? (isSelected ? 0 : 5) : (isSelected ? 8 : 10);
-
-    return BottomNavigationBarItem(
-      icon: Container(
-        width: 45,
-        height: 45,
-        padding: EdgeInsets.all(iconSize),
-        decoration: isSelected
-            ? const BoxDecoration(
-                color: primaryColor,
-                shape: BoxShape.circle,
-              )
-            : null,
-        child: ImageIcon(
-          AssetImage(icon),
-          color: isSelected ? whiteColor : bottomNavColor,
+  Widget _buildCustomTab(_NavItemData item, bool isSelected) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        HapticHelper.trigger(type: HapticFeedbackType.selection);
+        widget.navigationShell.goBranch(item.index);
+        navbarController.selectIndex.value = item.index;
+        chatController.isSearching.value = false;
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOutCubic,
+        padding: EdgeInsets.symmetric(
+          horizontal: isSelected ? 20.0 : 15.0,
+          vertical: 11.0,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected ? primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(24.0),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: primaryColor.withOpacity(0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            item.label == 'Explore'
+                ? Transform.scale(
+                    scale: 1.7,
+                    child: SvgPicture.asset(
+                      exploreIconSvg,
+                      width: 24.0,
+                      height: 24.0,
+                      colorFilter: ColorFilter.mode(
+                        isSelected ? whiteColor : bottomNavColor,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  )
+                : ImageIcon(
+                    AssetImage(item.icon),
+                    color: isSelected ? whiteColor : bottomNavColor,
+                    size: 26.0,
+                  ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOutCubic,
+              child: isSelected
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(width: 8.0),
+                        Text(
+                          item.label,
+                          style: CustomTextStyle.styledTextWidget.headlineMedium!.copyWith(
+                            color: whiteColor,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11.0.sp,
+                          ),
+                        ),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
         ),
       ),
-      label: label,
     );
   }
+}
+
+class _NavItemData {
+  final String icon;
+  final String label;
+  final int index;
+
+  _NavItemData({
+    required this.icon,
+    required this.label,
+    required this.index,
+  });
 }

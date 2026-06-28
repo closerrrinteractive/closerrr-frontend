@@ -1,4 +1,5 @@
 import 'package:closerrr/core/services/custom_services.dart';
+import 'package:closerrr/core/services/local_notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 
@@ -21,14 +22,16 @@ class PushNotificationService {
     FirebaseMessaging.instance.getInitialMessage().then(
       (message) {
         kLog("FirebaseMessaging.terminated.message.listen => $message");
-        final notification = message!.notification;
-        final data = message.data;
-        if (notification != null) {
-          if (data["type"] == "JOIN_LIVE_STREAM") {
-            RouterController.current
-                .pushNamed('stream_call', extra: {'userData': data});
+        if (message != null) {
+          final notification = message.notification;
+          final data = message.data;
+          if (notification != null) {
+            if (data["type"] == "JOIN_LIVE_STREAM") {
+              RouterController.current
+                  .pushNamed('stream_call', extra: {'userData': data});
+            }
+            // LocalNotificationService.createAndDisplayNotification(message);
           }
-          // LocalNotificationService.createAndDisplayNotification(message);
         }
       },
     );
@@ -45,7 +48,7 @@ class PushNotificationService {
             RouterController.current
                 .pushNamed('stream_call', extra: {'userData': data});
           }
-          // LocalNotificationService.createAndDisplayNotification(message);
+          await LocalNotificationService.createAndDisplayNotification(message);
         }
       },
     );

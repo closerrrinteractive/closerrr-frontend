@@ -21,10 +21,10 @@ class CongratsExplore extends StatelessWidget {
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [
-          SizedBox(width: 100.w, height: 28.h),
+          SizedBox(width: 100.w, height: 30.h),
           Container(
             width: 100.w,
-            height: 25.h,
+            height: 27.h,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),

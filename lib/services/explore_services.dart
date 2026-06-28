@@ -14,6 +14,7 @@ class ExploreScreenServices {
       required int limit,
       required String sort,
       String? name,
+      String? category,
       String? influencerId}) async {
     try {
       //Stan
@@ -24,6 +25,7 @@ class ExploreScreenServices {
           'page': page,
           'limit': 10,
           'sort': sort,
+          'category': category,
           'influencer_id': influencerId
         },
       );

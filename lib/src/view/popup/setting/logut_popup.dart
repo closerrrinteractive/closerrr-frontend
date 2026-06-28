@@ -61,13 +61,13 @@ class _LogutPopupState extends State<LogutPopup> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       CustomButton(
+                        width: 28.w,
                         buttonTitle: 'LOG OUT',
                         backButtonColor: popColor,
                         isTextStyle: true,
                         onlyText: true,
                         padding: const EdgeInsets.symmetric(
                           vertical: 14,
-                          horizontal: 24,
                         ),
                         onPress: () {
                           authController.logout();
@@ -93,6 +93,7 @@ class _LogutPopupState extends State<LogutPopup> {
                           ],
                         ),
                         child: CustomButton(
+                          width: 28.w,
                           buttonTitle: 'STAY IN',
                           backButtonColor: primaryColor,
                           isTextStyle: true,
@@ -100,7 +101,6 @@ class _LogutPopupState extends State<LogutPopup> {
                           onPress: () => Get.back(),
                           padding: const EdgeInsets.symmetric(
                             vertical: 14,
-                            horizontal: 24,
                           ),
                           titleStyle: CustomTextStyle
                               .styledTextWidget.titleSmall

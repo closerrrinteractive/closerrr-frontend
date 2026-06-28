@@ -89,12 +89,24 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
       ),
       body: SafeArea(
         child: Obx(() {
-          return eventController.upcomingEvents.isEmpty
-              ? const Center(child: CircularProgressIndicator())
-              : ListView.builder(
+          if (eventController.isUpcomingLoading.value &&
+              eventController.upcomingEvents.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (eventController.upcomingEvents.isEmpty) {
+            return Center(
+              child: Text(
+                'No upcoming events',
+                style: CustomTextStyle.styledTextWidget.bodyMedium?.copyWith(
+                  color: headingColor,
+                ),
+              ),
+            );
+          }
+          return ListView.builder(
                   controller: _scrollController,
                   physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.all(2.h),
+                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
                   itemCount: eventController.upcomingEvents.length +
                       (eventController.hasUpcommingMoreData.value ? 1 : 0),
                   itemBuilder: (context, index) {
@@ -102,10 +114,13 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
                       return const Center(child: CircularProgressIndicator());
                     }
                     final event = eventController.upcomingEvents[index];
-                    final time = DateFormat('dd, MMMM, yyyy | h:mm a')
+                    final time = DateFormat('E, d MMM, yyyy | h:mm a')
                         .format(DateTime.parse(event.time.toIso8601String()));
-                    Map profile =
+                    final profile =
                         userInformationController.userData.value['Profile'];
+                    final profileName = profile is Map
+                        ? (profile['fullname'] ?? profile['username'] ?? '')
+                        : '';
 
                     return UpcomingEventCard(
                       onTap: () {
@@ -113,11 +128,11 @@ class _UpcomingEventsScreenState extends State<UpcomingEventsScreen> {
                           context,
                           event,
                           time,
-                          profile['fullname'] ?? profile['username'],
+                          profileName,
                         );
                       },
                       title: event.name,
-                      posterUrl: event.image ?? '',
+                      posterUrl: event.getEventPoster(profile is Map ? profile['profile_pic'] : null),
                       byAuthor: event.user?.profile.fullname ??
                           event.user?.profile.username ??
                           profile['fullname'] ??

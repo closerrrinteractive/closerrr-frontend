@@ -66,66 +66,75 @@ class _ChatTileState extends State<ChatTile> {
       onTap: widget.onTapChat,
       onLongPress: widget.onHold,
       child: Container(
-        padding: EdgeInsets.only(bottom: 2.5.h),
-        margin: EdgeInsets.only(bottom: 2.5.h),
+        margin: EdgeInsets.symmetric(vertical: 0.6.h),
+        padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.5.h),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              width: 1,
-              color: textColor.withOpacity(0.2),
-            ),
-          ),
+          color: whiteColor,
+          borderRadius: BorderRadius.circular(16.sp),
+          boxShadow: [
+            BoxShadow(
+              color: textColor.withOpacity(0.12),
+              offset: const Offset(0, 4),
+              spreadRadius: 0,
+              blurRadius: 16,
+            )
+          ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 _buildAvatar(widthScale),
                 Obx(() {
                   RxList<LiveStreamM>? liveStreams =
                       chatAdmin.value?.liveStreams;
                   if (liveStreams?.isNotEmpty == true) {
-                    return TextButton(
-                      style: TextButton.styleFrom(
-                        backgroundColor: logOutColor,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 5.0,
-                            vertical: 0.0), // removes default padding
-                        minimumSize: const Size(0, 0), // shrinks the tap area
-                        tapTargetSize: MaterialTapTargetSize
-                            .shrinkWrap, // removes extra touch space
-                      ),
-                      onPressed: () async {
-                        LiveStreamM? liveStream = liveStreams?.first;
-                        Map userData = {
-                          "meta_data": jsonEncode({
-                            "user_id": liveStream?.user_id,
+                    return Padding(
+                      padding: EdgeInsets.only(top: 0.5.h),
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: logOutColor,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 5.0,
+                              vertical: 0.0), // removes default padding
+                          minimumSize: const Size(0, 0), // shrinks the tap area
+                          tapTargetSize: MaterialTapTargetSize
+                              .shrinkWrap, // removes extra touch space
+                        ),
+                        onPressed: () async {
+                          LiveStreamM? liveStream = liveStreams?.first;
+                          Map userData = {
+                            "meta_data": jsonEncode({
+                              "user_id": liveStream?.user_id,
+                              "id": liveStream?.live_stream_id,
+                              "chat_id": liveStream?.chat_id,
+                              "Profile": {
+                                "username": liveStream?.host_name,
+                                "profile_pic": liveStream?.host_profile_pic
+                              }
+                            }),
+                            "profile_pic": liveStream?.host_profile_pic,
                             "id": liveStream?.live_stream_id,
-                            "chat_id": liveStream?.chat_id,
-                            "Profile": {
-                              "username": liveStream?.host_name,
-                              "profile_pic": liveStream?.host_profile_pic
-                            }
-                          }),
-                          "profile_pic": liveStream?.host_profile_pic,
-                          "id": liveStream?.live_stream_id,
-                          "type": "JOIN_LIVE_STREAM",
-                          "username": liveStream?.host_name
-                        };
+                            "type": "JOIN_LIVE_STREAM",
+                            "username": liveStream?.host_name
+                          };
 
-                        final data = await LiveStreamService().startLivestream(
-                            id: userData["id"],
-                            join: true,
-                            streamId: jsonDecode(userData["meta_data"])["id"]);
-                        context.pushNamed("live_stream", extra: {
-                          'call': data["call"],
-                          'userData': userData
-                        });
-                      },
-                      child: Text(
-                        "Join Live",
-                        style: CustomTextStyle.styledTextWidget.displayMedium
-                            ?.copyWith(color: whiteColor),
+                          final data = await LiveStreamService().startLivestream(
+                              id: userData["id"],
+                              join: true,
+                              streamId: jsonDecode(userData["meta_data"])["id"]);
+                          context.pushNamed("live_stream", extra: {
+                            'call': data["call"],
+                            'userData': userData
+                          });
+                        },
+                        child: Text(
+                          "Join Live",
+                          style: CustomTextStyle.styledTextWidget.displayMedium
+                              ?.copyWith(color: whiteColor),
+                        ),
                       ),
                     );
                   } else {
@@ -134,9 +143,11 @@ class _ChatTileState extends State<ChatTile> {
                 }),
               ],
             ),
-            SizedBox(width: 4.w),
-            _buildChatInfo(widthScale),
-            const Spacer(),
+            SizedBox(width: 3.w),
+            Expanded(
+              child: _buildChatInfo(widthScale),
+            ),
+            SizedBox(width: 2.w),
             _buildChatDetails(widthScale),
           ],
         ),
@@ -152,12 +163,12 @@ class _ChatTileState extends State<ChatTile> {
             alignment: Alignment.center,
             children: [
               StatusView(
-                radius: 30,
+                radius: 3.h,
                 spacing: 15,
                 strokeWidth: 4,
                 indexOfSeenStatus: widget.chat.unreadCount.value,
                 numberOfStatus: widget.chat.storyCount.value,
-                padding: widget.chat.storyCount.value != 0 ? 5 : 2,
+                padding: widget.chat.storyCount.value != 0 ? 3 : 0,
                 centerImageUrl: ApiStrings.imageUrl +
                     (groupIcon?.value ??
                         chatAdmin.value?.profile?.profilePic ??
@@ -174,52 +185,56 @@ class _ChatTileState extends State<ChatTile> {
     return Obx(() {
       final profile = chatAdmin.value?.profile;
       RxString? groupName = widget.chat.groupName;
+      final customFriendName = loggedInUser.value?.chatUser.friendName?.value;
+      final creatorChatName = chatAdmin.value?.chatUser.nickname?.toString();
+      final defaultName = groupName?.value ??
+          profile?.fullname ??
+          profile?.username ??
+          "no name";
+
+      final displayName = (customFriendName != null && customFriendName.isNotEmpty)
+          ? customFriendName
+          : (creatorChatName != null && creatorChatName.isNotEmpty)
+              ? creatorChatName
+              : defaultName;
+
+      final double scale = widthScale * kTextFormFactor;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 50.w,
-            child: Text(
-              (loggedInUser.value?.chatUser.friendName?.value != null &&
-                      loggedInUser.value!.chatUser.friendName!.value.isNotEmpty)
-                  ? loggedInUser.value!.chatUser.friendName!.value
-                  : groupName?.value ??
-                      profile?.fullname ??
-                      profile?.username ??
-                      "no name",
-              //     +
-              // (chatAdmin.value?.id.toString() == userId.value
-              //     ? ' (Broadcast)'
-              //     : ''),
-              overflow: TextOverflow.ellipsis,
-              style: CustomTextStyle.styledTextWidget.bodyMedium?.copyWith(
-                color: blackColor,
-                fontSize: (widthScale * kTextFormFactor) * 18,
-                fontWeight: FontWeight.bold,
-              ),
+          Text(
+            displayName,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            style: CustomTextStyle.styledTextWidget.labelMedium!.copyWith(
+              color: mainTextColor,
+              fontWeight: FontWeight.bold,
+              height: 1.1,
+              fontSize: 16 * scale,
             ),
           ),
-          SizedBox(
-            width: 45.w,
-            child: Text(
-              widget.chat.lastMessage.value.isNotEmpty &&
-                      widget.chat.lastMessage.value.first.messageText != null
-                  ? widget.chat.lastMessage.value.first.messageText!
-                              .contains('@@') &&
-                          loggedInUser.value?.profile?.id != null &&
-                          loggedInUser.value?.profile?.id !=
-                              widget.chat.lastMessage.value.first.senderId
-                      ? "@${loggedInUser.value?.profile?.username ?? ''}"
-                      : widget.chat.lastMessage.value.first.messageText ??
-                          'media file'
-                  : 'No Messages',
-              overflow: TextOverflow.ellipsis,
-              style: CustomTextStyle.styledTextWidget.labelMedium?.copyWith(
-                color: textColor,
-                fontSize: (widthScale * kTextFormFactor) * 12.63,
-                fontWeight: FontWeight.w100,
-              ),
+          const SizedBox(height: 4),
+          Text(
+            widget.chat.lastMessage.value.isNotEmpty &&
+                    widget.chat.lastMessage.value.first.messageText != null
+                ? widget.chat.lastMessage.value.first.messageText!
+                            .contains('@@') &&
+                        loggedInUser.value?.profile?.id != null &&
+                        loggedInUser.value?.profile?.id !=
+                            widget.chat.lastMessage.value.first.senderId
+                    ? "@${loggedInUser.value?.profile?.username ?? ''}"
+                    : widget.chat.lastMessage.value.first.messageText ??
+                        'media file'
+                : 'No Messages',
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            style: CustomTextStyle.styledTextWidget.headlineLarge!.copyWith(
+              color: textColor,
+              fontWeight: FontWeight.w600,
+              height: 1.1,
+              fontSize: 11 * scale,
             ),
           ),
         ],
@@ -232,45 +247,64 @@ class _ChatTileState extends State<ChatTile> {
       Rx<DateTime>? time = widget.chat.lastMessage.isNotEmpty
           ? widget.chat.lastMessage.last.updatedAt
           : null;
-      final createdAt =
-          time != null ? DateFormat('hh:mm').format(time.value) : "";
+      String createdAt = "";
+      if (time != null) {
+        final DateTime messageTime = time.value;
+        final DateTime now = DateTime.now();
+        final difference = now.difference(messageTime);
+        if (difference.inHours < 24) {
+          createdAt = DateFormat('h:mm a').format(messageTime);
+        } else {
+          createdAt = DateFormat('dd/MM/yy').format(messageTime);
+        }
+      }
+      final double scale = widthScale * kTextFormFactor;
 
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (widget.chat.unreadCount.value > 0)
-            const CircleAvatar(
-              backgroundColor: blueBack,
-              radius: 7,
-              child: SizedBox(),
-              // child: Text(
-              //   widget.chat.unreadCount.value.toString(),
-              //   style: CustomTextStyle.styledTextWidget.labelMedium?.copyWith(
-              //     color: whiteColor,
-              //     fontSize: (widthScale * kTextFormFactor) * 12.63,
-              //     fontWeight: FontWeight.w600,
-              //   ),
-              // ),
-            ),
-          SizedBox(height: 2.w),
           if (time != null)
             Text(
-              createdAt.toString(),
-              style: CustomTextStyle.styledTextWidget.labelMedium?.copyWith(
-                color: textColor.withOpacity(0.6),
-                fontWeight: FontWeight.w100,
-                fontSize: (widthScale * kTextFormFactor) * 14,
+              createdAt,
+              style: CustomTextStyle.styledTextWidget.headlineLarge?.copyWith(
+                color: textColor.withOpacity(0.8),
+                fontWeight: FontWeight.w600,
+                fontSize: 11 * scale,
+                height: 1.1,
               ),
             ),
-          SizedBox(height: 1.w),
+          const SizedBox(height: 6),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              if (widget.chat.isFavourite?.value ?? false) ...{
-                SvgPicture.asset('assets/svg/favourite.svg'),
-              },
-              SizedBox(width: 1.w),
-              if (widget.chat.isMute?.value ?? false) ...{
-                SvgPicture.asset('assets/svg/notification.svg'),
-              },
+              if (widget.chat.isFavourite?.value ?? false)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6.0),
+                  child: SvgPicture.asset(
+                    'assets/svg/favourite.svg',
+                    width: 14,
+                    height: 14,
+                  ),
+                ),
+              if (widget.chat.isMute?.value ?? false)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6.0),
+                  child: SvgPicture.asset(
+                    'assets/svg/notificationbell.svg',
+                    width: 14,
+                    height: 14,
+                  ),
+                ),
+              if (widget.chat.unreadCount.value > 0)
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: blueBack,
+                    shape: BoxShape.circle,
+                  ),
+                ),
             ],
           ),
         ],

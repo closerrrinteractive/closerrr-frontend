@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sizer/sizer.dart';
 
+import '../../../../core/config/haptic_helper.dart';
 import '../../../../core/themes/colors.dart';
 import '../../../../core/themes/text_style.dart';
 import '../../../../core/utils/constant.dart';
@@ -42,7 +43,12 @@ class SettingTile extends StatelessWidget {
           const Spacer(),
           Switch(
             value: value,
-            onChanged: onChanged,
+            onChanged: onChanged != null
+                ? (val) {
+                    HapticHelper.trigger(type: HapticFeedbackType.medium);
+                    onChanged!(val);
+                  }
+                : null,
             activeColor: whiteColor,
             activeTrackColor: primaryColor,
             inactiveThumbColor: whiteColor,
@@ -65,6 +71,7 @@ class TabTiles extends StatelessWidget {
     this.notification,
     this.secondary,
     this.isLoading,
+    this.letterSpacing,
     required this.padding,
   });
 
@@ -75,13 +82,17 @@ class TabTiles extends StatelessWidget {
   final bool? setting;
   final bool? isLoading;
   final bool? notification;
+  final double? letterSpacing;
   final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
     final widthScale = MediaQuery.of(context).size.width / kDesignWidth;
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticHelper.trigger(type: HapticFeedbackType.light);
+        if (onTap != null) onTap!();
+      },
       child: Padding(
         padding: padding,
         child: Column(
@@ -92,7 +103,7 @@ class TabTiles extends StatelessWidget {
                   Container(
                     width: 40,
                     height: 40,
-                    padding: const EdgeInsets.all(11),
+                    padding: EdgeInsets.all(icons == 'logout' ? 12.2 : 11),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
                       color: settingCircle,
@@ -136,6 +147,7 @@ class TabTiles extends StatelessWidget {
                                   fontWeight: FontWeight.w600,
                                   fontSize: (widthScale * kTextFormFactor) * 18,
                                   fontFamily: 'Hellix',
+                                  letterSpacing: letterSpacing,
                                 ),
                               ),
                             ),

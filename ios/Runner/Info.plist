@@ -65,6 +65,10 @@
 	<string>Closerrr requires access to your microphone to record audio for send in chats.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Closerrr requires access to your photo library in order to update profile picture, send images, videos in chats.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Closerrr requires access to your photo library in order to save photos and videos to your device.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Closerrr requires access to Face ID in order to secure your app using App Lock.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>SKAdNetworkItems</key>

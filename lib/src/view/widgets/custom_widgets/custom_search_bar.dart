@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:sizer/sizer.dart';
 
+import 'package:closerrr/core/config/haptic_helper.dart';
 import '../../../../core/themes/colors.dart';
 import '../../../../core/themes/text_style.dart';
 import '../../../../core/utils/constant.dart';
@@ -111,14 +112,18 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
                     const Spacer(),
                   } else ...{
                     GestureDetector(
-                      onTap: widget.onClose,
+                      onTap: () {
+                        HapticHelper.trigger(type: HapticFeedbackType.light);
+                        if (widget.onClose != null) {
+                          widget.onClose!();
+                        }
+                      },
                       child: Image(
                         height: 5.h,
                         width: 5.h,
                         image: const AssetImage(crossIcon),
                       ),
                     ),
-                    SizedBox(width: 1.5.w),
                     Expanded(
                       child: CustomTextFormField(
                         keyboardType: TextInputType.text,
@@ -153,7 +158,10 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
                   if (!widget.isEvents) ...{
                     if (!chatController.isSearching.value)
                       GestureDetector(
-                        onTap: () => chatController.isSearching.value = true,
+                        onTap: () {
+                          HapticHelper.trigger(type: HapticFeedbackType.light);
+                          chatController.isSearching.value = true;
+                        },
                         child: Image(
                           height: 6.h,
                           width: 6.h,
@@ -177,7 +185,7 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
                             image: AssetImage(widget.icon),
                             height: 5.h,
                           ),
-                    SizedBox(width: 3.w),
+                    SizedBox(width: 1.5.w),
                     Text(
                       widget.title,
                       style:
@@ -186,6 +194,7 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
                         color: headingColor,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Circe',
+                        letterSpacing: -0.8,
                       ),
                     ),
                     const Spacer(),

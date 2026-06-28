@@ -38,7 +38,7 @@ class ShowcaseData {
   dynamic width;
   dynamic height;
   String resolution;
-  String metadata;
+  String? metadata;
   DateTime createdAt;
   DateTime updatedAt;
 
@@ -53,7 +53,7 @@ class ShowcaseData {
     required this.width,
     required this.height,
     required this.resolution,
-    required this.metadata,
+    this.metadata,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -69,7 +69,7 @@ class ShowcaseData {
         width: json["width"],
         height: json["height"],
         resolution: json["resolution"],
-        metadata: json["metadata"],
+        metadata: json["metadata"] as String?,
         createdAt: DateTime.parse(json["createdAt"]),
         updatedAt: DateTime.parse(json["updatedAt"]),
       );
