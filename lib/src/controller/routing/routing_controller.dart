@@ -73,6 +73,7 @@ class RouteWithExtra {
 }
 
 class RouterController extends GetxController {
+  bool hasSplashPlayed = false;
   GoRouter? _router;
   int? _currentRoleId;
   final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'Root');
@@ -254,6 +255,12 @@ class RouterController extends GetxController {
         ];
 
         print("Route - ${state.fullPath}");
+
+        if (!hasSplashPlayed &&
+            !publicRoutes.any((route) => state.fullPath!.startsWith(route))) {
+          return '/splash';
+        }
+
         // Skip redirect for public routes
         if (publicRoutes.any((route) => state.fullPath!.startsWith(route))) {
           return null;
@@ -286,6 +293,8 @@ class RouterController extends GetxController {
               onInit: () async {
                 final routeWithExtra = await getHomeRoute();
                 await Future.delayed(const Duration(milliseconds: 4200));
+
+                hasSplashPlayed = true;
 
                 final preferencesController = Get.find<PreferencesController>();
                 final appLockService = Get.find<AppLockService>();
